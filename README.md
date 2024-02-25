@@ -27,7 +27,7 @@ Our software allows us to control features such as making quick flight mode chan
 | 1 |Adding UDP And USB socket connection|✅|
 | 2 |Sending heartbeat continously and getting heartbeat continously|✅|
 | 3 |Listing all parameters and update parameters support|🕒|
-| 4 |Getting GPS coordinates of the plane and updating location on the map sync.|❌|
+| 4 |Getting GPS coordinates of the plane and updating location on the map sync.|✅|
 | 5 |Getting other planes datas from TEKNOFEST REST API clone, listing all planes on the maps, adding jammer locations|❌|
 | 6 |Adding support clicking on other planes for custom plane follow mode|❌|
 | 7 |Getting raw camera content from UDP|❌|
