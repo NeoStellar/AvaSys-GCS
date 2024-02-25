@@ -3,6 +3,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSslSocket>
+#include <mavlink/planecontroller.h>
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -11,8 +12,11 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     MavLinkProperties mavlinkProperties;
+    PlaneController planeController;
 
-    MavLinkUDP mavLink(&mavlinkProperties, &app);
+    MavLinkUDP mavLink(&mavlinkProperties, &planeController, &app);
+
+
     QQmlApplicationEngine engine;
 
 
@@ -49,6 +53,8 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("mavlinkHandler", &mavLink);
     engine.rootContext()->setContextProperty("mavlinkProperties", &mavlinkProperties);
+    planeController.setQmlContext(engine.rootContext());
+
 
     engine.load(url);
 

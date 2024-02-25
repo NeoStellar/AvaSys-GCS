@@ -4,10 +4,13 @@
 #include <QTimer>
 #include <unistd.h>
 
-MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, QObject *parent)
-    : QObject(parent), m_udpManager(mavlinkProperties),
-    m_mavLinkProperties(mavlinkProperties) {
-
+MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *planeController, QObject *parent)
+    : QObject(parent),
+    m_udpManager(mavlinkProperties),
+    m_mavLinkProperties(mavlinkProperties),
+    m_planeController(planeController)
+{
+    qRegisterMetaType<int32_t>("int32_t");
     // Connect signals from MavLinkProperties to corresponding slots
     connect(m_mavLinkProperties, &MavLinkProperties::armedChanged, this, &MavLinkUDP::onArmedChangedSlot);
 
@@ -38,11 +41,14 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     // Connect signals from UDPManager to MavLink
     connect(&m_udpManager, &UDPManager::connected, this, &MavLinkUDP::connected);
     connect(&m_udpManager, &UDPManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
+    connect(&m_udpManager, &UDPManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
+    connect(&m_udpManager, &UDPManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
+
 
     // Connect signals from MavLinkProperties to MavLink
     connect(m_mavLinkProperties, &MavLinkProperties::connectedChanged, this, &MavLinkUDP::connectedChanged);
 
-    connect(&m_udpManager, &UDPManager::dataReceived, this, &MavLinkUDP::handleReceivedData);
+    //connect(&m_udpManager, &UDPManager::dataReceived, this, &MavLinkUDP::handleReceivedData);
 
 
     m_mavLinkProperties->setConnected(true);
@@ -51,17 +57,38 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
 
+    m_planeController->addPlane(1, 37.52, -122.276, 10);
+    //qDebug() << m_planeController->planes();
+    //qDebug() << m_planeController->planes().at(0)->latitude();
+    //qDebug() << "Added plane!sa sa";
     return 1;
 }
-void MavLinkUDP::handleReceivedData(const QByteArray &data) {
+/*void MavLinkUDP::handleReceivedData(const ssize_t &data) {
 
+} */
+
+void MavLinkUDP::connected(){
+    //m_planeController->addPlane(1, 37.52, -122.276, 10);
+    qDebug() << "Added plane!";
+}
+
+void MavLinkUDP::locationDataRecieved(float latitude, float longitude, int32_t altitude){
+    //qDebug() << "latitude: " << latitude;
+    //qDebug() << "longitude: " << longitude;
+    //qDebug() << "altitude: " << altitude;
+
+    m_planeController->updatePlane(m_mavLinkProperties->sysid(), latitude, longitude, altitude);
+}
+
+void MavLinkUDP::yawDataRecieved(float yaw){
+    m_planeController->updateYaw(m_mavLinkProperties->sysid(), yaw);
 }
 
 
 void MavLinkUDP::onHeartbeatTimeout() {
     sendHeartbeat();
 }
-void MavLinkUDP::receiveHeartbeat() {
+/*void MavLinkUDP::receiveHeartbeat() {
     // Implement receiving heartbeat message using m_udpManager
     // Example:
     //connect(&m_udpManager, &UDPManager::dataReceived, this, &MavLinkUDP::handleReceivedData);
@@ -107,7 +134,7 @@ void MavLinkUDP::receiveHeartbeat() {
             }
         }
     }
-}
+}*/
 
 void MavLinkUDP::sendHeartbeat() {
 
@@ -125,6 +152,7 @@ void MavLinkUDP::sendHeartbeat() {
 
 int MavLinkUDP::send_heartbeat()
 {
+    //qDebug() << "a";
     if(m_mavLinkProperties->connected()){
         mavlink_message_t message;
         mavlink_heartbeat_t heartbeat;

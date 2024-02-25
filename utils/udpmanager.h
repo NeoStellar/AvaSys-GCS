@@ -10,6 +10,7 @@
 
 
 class UDPReceiverThread : public QThread {
+
     Q_OBJECT
 public:
     explicit UDPReceiverThread(int socket_fd, QObject *parent = nullptr);
@@ -17,6 +18,8 @@ public:
 
 signals:
     void dataReceived(const QByteArray &data);
+    void locationDataRecieved(float latitude, float longitude, int32_t altitude);
+    void yawDataRecieved(float yaw);
 
 protected:
     void run() override;
@@ -24,6 +27,7 @@ protected:
 private:
     int m_socket_fd;
 };
+
 
 
 class UDPManager : public QObject {
@@ -50,6 +54,8 @@ signals:
     void disconnected();
     void errorOccurred(int errorCode);
     void dataReceived(const QByteArray& data);
+    void locationDataRecieved(float latitude, float longitude, int32_t altitude);
+    void yawDataRecieved(float yaw);
 public slots:
     void onConnected();
     void onErrorOccurred(int errorCode);

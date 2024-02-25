@@ -5,7 +5,10 @@
 #include "mavlinkproperties.h"
 #include "mavlink-out/common/mavlink.h"
 
-UDPReceiverThread::UDPReceiverThread(int socket_fd, QObject *parent) : QThread(parent), m_socket_fd(socket_fd) {}
+UDPReceiverThread::UDPReceiverThread(int socket_fd, QObject *parent) : QThread(parent), m_socket_fd(socket_fd)
+{
+
+}
 
 UDPReceiverThread::~UDPReceiverThread() {
     quit();
@@ -13,21 +16,109 @@ UDPReceiverThread::~UDPReceiverThread() {
 }
 
 void UDPReceiverThread::run() {
-    char buffer[2048]; // Adjust buffer size as needed
-
     while (!isInterruptionRequested()) {
-        ssize_t recvLen = recvfrom(m_socket_fd, buffer, sizeof(buffer), 0,
-                                   nullptr, nullptr); // We don't need sender info here
-        if (recvLen == -1) {
+        uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+        ssize_t recvLen = recv(m_socket_fd, buf, sizeof(buf), 0);
+        //ssize_t recvLen = recvfrom(m_socket_fd, buffer, sizeof(buffer), 0,
+        //                           nullptr, nullptr); // We don't need sender info here
+        // recvLen == -1
+        if (false) {
             qDebug() << "Failed to receive data from socket";
             break;
         }
 
-        // Process received data
-        QByteArray data(buffer, recvLen);
-        emit dataReceived(data);
+        //qDebug() << "recvLen:" << recvLen;
+
+        mavlink_message_t msg;
+        mavlink_status_t status;
+
+        //qDebug() << "handle";
+
+
+
+        //QByteArray byteArray(reinterpret_cast<char*>(buf), recvLen);
+        QByteArray byteArray(reinterpret_cast<const char*>(&recvLen), recvLen);
+
+
+        int error = 0;
+        if(recvLen != -1){
+            for (ssize_t i = 0; i < recvLen; ++i) {
+                if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
+                    //qDebug() << "abc";
+                    // Mavlink mesajını filtreleme
+                    switch (msg.msgid) {
+                        case MAVLINK_MSG_ID_HEARTBEAT:
+                            //qDebug() << "Received HEARTBEAT message";
+                            break;
+
+                        case MAVLINK_MSG_ID_SYS_STATUS:
+                            //qDebug() << msg.sysid;
+                            // Handle system status message
+                            //qDebug() << "Received SYS_STATUS message";
+                            break;
+                        case MAVLINK_MSG_ID_ATTITUDE:
+                            mavlink_attitude_t attitude;
+                            mavlink_msg_attitude_decode(&msg, &attitude);
+                            // Extract yaw (heading) from the received ATTITUDE message
+                            //attitude.yaw;
+                            emit yawDataRecieved(attitude.yaw);
+                            // Process yaw data as needed
+                            break;
+                        case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+                            //qDebug() << "Got coordinate data";
+                            mavlink_global_position_int_t gps_data;
+                            mavlink_msg_global_position_int_decode(&msg, &gps_data);
+                            int32_t latitude = gps_data.lat;  // Latitude in degrees * 1e7
+                            int32_t longitude = gps_data.lon; // Longitude in degrees * 1e7
+                            int32_t altitude = gps_data.alt;  // Altitude in millimeters
+
+                            float fLat = latitude / 1e7;
+                            float fLong = longitude / 1e7;
+                            int32_t fAlt = altitude / 1000;
+                            emit locationDataRecieved(fLat, fLong, fAlt);
+
+                            // Convert latitude, longitude, and altitude to appropriate units if necessary
+                            // For example, divide by 1e7 to convert latitude and longitude to degrees
+                            // Divide altitude by 1000 to convert millimeters to meters
+
+                            //qDebug() << "Latitude: " << fLat;
+                            //qDebug() << "Longitude: " << fLong;
+                            //qDebug() << "Altitude: " << fAlt;
+                            break;
+                    }
+                }
+            }
+            emit dataReceived(byteArray);
+        }else{
+            qDebug() << "Connection problem! Error is: " << error;
+            error += 1;
+            if(error >= 5){
+                qDebug() << "Connection LOST closing socket";
+                emit dataReceived(byteArray);
+
+                //close(socket_fd());
+                qDebug() << "Socket closed successfully";
+                return;
+            }else{
+                QThread::sleep(1);
+            }
+        }
     }
 }
+
+ssize_t extractSSizeT(const QByteArray &byteArray, int startIndex) {
+    // Check if there are enough bytes in the array to represent ssize_t
+    if (startIndex + static_cast<int>(sizeof(ssize_t)) > byteArray.size()) {
+        qDebug() << "Not enough bytes in the array to represent ssize_t";
+        return -1; // Or any suitable error handling
+    }
+
+    // Interpret the bytes as ssize_t
+    ssize_t value;
+    memcpy(&value, byteArray.constData() + startIndex, sizeof(ssize_t));
+    return value;
+}
+
 
 
 
@@ -37,6 +128,7 @@ UDPManager::UDPManager(MavLinkProperties *mavlinkProperties, QObject *parent)
     m_src_addr_set(false),
     m_mavlinkProperties(mavlinkProperties)
 {
+    qRegisterMetaType<int32_t>("int32_t");
 }
 
 UDPManager::~UDPManager() {
@@ -102,12 +194,16 @@ int UDPManager::initialize(const QString& ipString, int port) {
     }
 
     m_src_addr_set = true;
-    emit connected();
+
 
     // Start receiving data in a separate thread
     m_receiverThread = new UDPReceiverThread(m_socket_fd, this);
     connect(m_receiverThread, &UDPReceiverThread::dataReceived, this, &UDPManager::handleReceivedData);
+    connect(m_receiverThread, &UDPReceiverThread::locationDataRecieved, this, &UDPManager::locationDataRecieved);
+    connect(m_receiverThread, &UDPReceiverThread::yawDataRecieved, this, &UDPManager::yawDataRecieved);
     m_receiverThread->start();
+
+    m_mavlinkProperties->setSysid(1);
 
     // Create a timer to check for received data periodically (optional)
     m_timer = new QTimer(this);
@@ -120,12 +216,16 @@ int UDPManager::initialize(const QString& ipString, int port) {
     });
     m_timer->start(1000); // Adjust the interval as needed
 
-
+    emit connected();
     // Assume HeartbeatListener and startHeartbeat() methods are defined elsewhere
     // HeartbeatListener *listener = new HeartbeatListener(m_socket_fd, &m_is_connected);
     // listener->start();
     // startHeartbeat();
     return 1;
+}
+
+void UDPManager::connected(){
+    qDebug() << "UDP MANAGER signal";
 }
 void UDPManager::stop() {
     if (m_receiverThread) {
@@ -149,48 +249,37 @@ void UDPManager::stop() {
 }
 
 void UDPManager::handleReceivedData(const QByteArray &data) {
-    // Process received data here
-    //qDebug() << "Received data:" << data;
+    ssize_t extractedValue = extractSSizeT(data, 0);
+    //qDebug() << "Extracted value: " << extractedValue;
+    if(extractedValue == -1){
+        qDebug() << "failed attempt";
+        m_mavlinkProperties->setConnected(false);
+        stop();
+    }else {
+        /*
+        uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+        mavlink_message_t msg;
+        mavlink_status_t status;
 
-
-    mavlink_message_t msg;
-    mavlink_status_t status;
-
-    //qDebug() << "handle";
-
-    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-    //ssize_t recvLen = recv(socket_fd(), buf, sizeof(buf), 0);
-    ssize_t recvLen = data.toLong();
-    int error = 0;
-    if(recvLen != -1){
-        for (ssize_t i = 0; i < recvLen; ++i) {
+        for (ssize_t i = 0; i < extractedValue; ++i) {
             if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
+                //qDebug() << "abc";
                 // Mavlink mesajını filtreleme
                 switch (msg.msgid) {
                 case MAVLINK_MSG_ID_HEARTBEAT:
-                    //qDebug() << "Received HEARTBEAT message";
+                    //qDebug() << "Received SECOND HEARTBEAT message";
                     break;
                 case MAVLINK_MSG_ID_SYS_STATUS:
+                    qDebug() << "SYS_ID: " << msg.sysid;
                     // Handle system status message
                     //qDebug() << "Received SYS_STATUS message";
                     break;
                 }
             }
-        }
-    }else{
-        qDebug() << "Connection problem! Error is: " << error;
-        error += 1;
-        if(error >= 5){
-            qDebug() << "Connection LOST closing socket";
-            m_mavlinkProperties->setConnected(false);
-            stop();
-            close(socket_fd());
-            qDebug() << "Socket closed successfully";
-            return;
-        }else{
-            QThread::sleep(1);
-        }
+        } */
+        //qDebug() << "successful attempt";
     }
+
 }
 
 void UDPManager::onConnected()

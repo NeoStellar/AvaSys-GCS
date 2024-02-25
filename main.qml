@@ -5,6 +5,7 @@ import QtQuick.Layouts 1.15
 import "ui/RightPanel"
 
 Window {
+    id: window
     width: 1280
     height: 720
     visible: true

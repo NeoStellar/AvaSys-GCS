@@ -5,6 +5,7 @@ MavLinkProperties::MavLinkProperties(QObject *parent)
     : QObject(parent),
     m_armed(false),
     m_connected(false) {
+    qRegisterMetaType<int32_t>("int32_t");
 }
 
 bool MavLinkProperties::armed() const {
@@ -34,3 +35,16 @@ void MavLinkProperties::toggleArmStatus()
 }
 
 
+
+int MavLinkProperties::sysid() const
+{
+    return m_sysid;
+}
+
+void MavLinkProperties::setSysid(int newSysid)
+{
+    if (m_sysid == newSysid)
+        return;
+    m_sysid = newSysid;
+    emit sysidChanged();
+}

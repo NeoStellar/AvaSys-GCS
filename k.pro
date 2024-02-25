@@ -9,6 +9,8 @@ LIBS += -ludev
 SOURCES += \
         main.cpp \
         mavlink/mavlinkudp.cpp \
+        mavlink/plane.cpp \
+        mavlink/planecontroller.cpp \
         utils/mavlinkproperties.cpp \
         utils/udpmanager.cpp \
         utils/utils.cpp
@@ -28,6 +30,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     ui/assets/11.png \
+    ui/assets/car3.png \
     ui/assets/neostellar-logo.png \
     ui/assets/padlock-unlock.png \
     ui/assets/padlock.png \
@@ -521,5 +524,7 @@ HEADERS += \
     mavlink-out/standard/testsuite.h \
     mavlink-out/standard/version.h \
     mavlink/mavlinkudp.h \
+    mavlink/plane.h \
+    mavlink/planecontroller.h \
     utils/mavlinkproperties.h \
     utils/udpmanager.h

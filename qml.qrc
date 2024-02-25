@@ -10,5 +10,6 @@
         <file>ui/assets/plane.png</file>
         <file>ui/assets/ui-current.png</file>
         <file>ui/BottomPanel/BottomBar.qml</file>
+        <file>ui/assets/car3.png</file>
     </qresource>
 </RCC>
