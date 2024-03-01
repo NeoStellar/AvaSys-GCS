@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>ui/RightPanel/RightPanel.qml</file>
+        <file>ui/assets/11.png</file>
+        <file>ui/assets/neostellar-logo.png</file>
+        <file>ui/assets/padlock.png</file>
+        <file>ui/assets/padlock-unlock.png</file>
+        <file>ui/assets/plane.png</file>
+        <file>ui/assets/ui-current.png</file>
+        <file>ui/assets/car3.png</file>
+        <file>ui/assets/plane_selected.png</file>
+    </qresource>
+</RCC>
