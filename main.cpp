@@ -8,13 +8,15 @@
 #include <utils/httpclient.h>
 #include <utils/teknofestproperties.h>
 #include <QJsonDocument>
+#include <video/videoitem.h>
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
     QGuiApplication app(argc, argv);
-
+    VideoItem videoItem;
+    qmlRegisterType<VideoItem>("CustomTypes", 1, 0, "VideoItem");
     MavLinkProperties mavlinkProperties;
     PlaneController planeController;
     HttpClient client;
@@ -27,8 +29,8 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
 
-    teknofestProperties.setSimMode(true);
-
+    teknofestProperties.setSimMode(false);
+    //qmlRegisterType<PlaneController>("MyTypes", 1, 0, "MyObject");
 
 
     // Example usage
@@ -66,9 +68,10 @@ int main(int argc, char *argv[])
 
     engine.rootContext()->setContextProperty("mavlinkHandler", &mavLink);
     engine.rootContext()->setContextProperty("mavlinkProperties", &mavlinkProperties);
+    engine.rootContext()->setContextProperty("teknofestProperties", &teknofestProperties);
 
     QString ipString = "127.0.0.1"; // Example IP address
-    int port = 14550;//3131; //3131; //14550; // Example port
+    int port = 14550; //teknofestProperties.simMode() ? 3131 : 14550;//3131; //3131; //14550; // Example port
     int result = mavLink.initialize(ipString, port);
     if (result < 0) {
         qDebug() << "Initialization failed. Error code:" << result;
@@ -87,7 +90,7 @@ int main(int argc, char *argv[])
     //});
 
 
-    std::pair<int, QByteArray> pair = client.sendAuthRequest("http://replica.neostellar.net/api/giris", "aaa", "straaaaing");
+    std::pair<int, QByteArray> pair = client.sendAuthRequest("http://replica.neostellar.net/api/giris", "kullanıcı2", "sifre");
     takimid = pair.first;
     session_id = pair.second;
 
@@ -96,8 +99,8 @@ int main(int argc, char *argv[])
     teknofestProperties.setsession(session_id);
     teknofestProperties.setTakimid(takimid);
 
-    //qDebug() << teknofestProperties.takimid();
-    //qDebug() << teknofestProperties.session();
+    qDebug() << teknofestProperties.takimid();
+    qDebug() << teknofestProperties.session();
 
 
 
@@ -118,6 +121,7 @@ int main(int argc, char *argv[])
             QString serverUrl = "http://replica.neostellar.net/api/telemetri_gonder"; // Example server URL
             client.sendLocationData(serverUrl, &teknofestProperties, &planeController, json);
         }
+        //videoItem.startTimer(1000);
     }
 
 

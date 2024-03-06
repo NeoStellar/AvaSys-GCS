@@ -200,6 +200,8 @@ std::vector<plane*> HttpClient::handlePostResponse(const QByteArray &response, P
         //qDebug() << planeObject;
         // Parse plane information and set values accordingly
         plane->setTeamid(planeObject["takim_numarasi"].toInt());
+        plane->setIhaYonelme(planeObject["iha_yonelme"].toDouble());
+        plane->setSysid(-1);
         plane->setLongitude(planeObject["iha_boylam"].toDouble());
         plane->setLatitude(planeObject["iha_enlem"].toDouble());
         plane->setAltitude(planeObject["iha_irtifa"].toDouble());
@@ -213,7 +215,7 @@ std::vector<plane*> HttpClient::handlePostResponse(const QByteArray &response, P
         qDebug() << "is plane selected:" << plane->isSelected();
         //plane->setIsSelected(planeController->findPlane(planeObject["takim_numarasi"].toInt())->isSelected()); // Assuming isSelected is not provided in the JSON
 
-        //qDebug() << "Plane yaw after getting all: " << plane->yaw();
+        qDebug() << "Plane yaw after getting all: " << plane->yaw();
 
         // Parse GPS time
         QJsonObject gpsTimeObject = planeObject["gps_saati"].toObject();
@@ -228,28 +230,33 @@ std::vector<plane*> HttpClient::handlePostResponse(const QByteArray &response, P
             );
 
         // Populate location data
-        plane::LocationData locationData;
-        locationData.gpsSaati = gpsTime;
-        locationData.ihaBoylam = planeObject["iha_boylam"].toDouble();
-        locationData.ihaEnlem = planeObject["iha_enlem"].toDouble();
-        locationData.ihaIrtifa = planeObject["iha_irtifa"].toDouble();
-        locationData.ihaDikilme = planeObject["iha_dikilme"].toDouble();
-        locationData.ihaYonelme = planeObject["iha_yonelme"].toDouble();
-        locationData.ihaYatis = planeObject["iha_yatis"].toDouble();
-        locationData.ihaHiz = planeObject["iha_hiz"].toDouble();
-        locationData.ihaBatarya = planeObject["iha_batarya"].toDouble();
-        locationData.ihaKilitlenme = planeObject["iha_kilitlenme"].toInt();
-        locationData.ihaOtonom = planeObject["iha_otonom"].toInt();
-        locationData.hedefMerkezX = planeObject["hedef_merkez_X"].toInt();
-        locationData.hedefMerkezY = planeObject["hedef_merkez_Y"].toInt();
-        locationData.hedefGenislik = planeObject["hedef_genislik"].toInt();
-        locationData.hedefYukseklik = planeObject["hedef_yukseklik"].toInt();
-        locationData.takimNumarasi = planeObject["takim_numarasi"].toInt();
+        plane->setGpsSaati(gpsTime);
+        plane->setIhaBoylam(planeObject["iha_boylam"].toDouble());
+        plane->setIhaEnlem(planeObject["iha_enlem"].toDouble());
+        plane->setIhaIrtifa(planeObject["iha_irtifa"].toDouble());
+        plane->setIhaDikilme(planeObject["iha_dikilme"].toDouble());
 
-        // Set location data for the plane
-        plane->setLocationData(locationData);
+        qDebug() << plane->teamid() << ":"<< plane->ihaYonelme();
+        plane->setIhaYatis(planeObject["iha_yatis"].toDouble());
+        plane->setIhaHiz(planeObject["iha_hiz"].toDouble());
+        plane->setIhaBatarya(planeObject["iha_batarya"].toDouble());
+        plane->setIhaKilitlenme(planeObject["iha_kilitlenme"].toInt());
+        plane->setIhaOtonom(planeObject["iha_otonom"].toInt());
+        plane->setHedefMerkezX(planeObject["hedef_merkez_X"].toInt());
+        plane->setHedefMerkezY(planeObject["hedef_merkez_Y"].toInt());
+        plane->setHedefGenislik(planeObject["hedef_genislik"].toInt());
+        plane->setHedefYukseklik(planeObject["hedef_yukseklik"].toInt());
+
+
+        plane->setAirspeed(plane->ihaHiz());
+
+        // TODO
+        // pressure data is missing
+        plane->setPressure(plane->ihaDikilme());
 
         // Add the plane object to the vector
+
+        qDebug() << "Plane: " << plane->teamid() << " Boylam: " << plane->ihaBoylam();
         planes.push_back(plane);
     }
     return planes;
@@ -269,7 +276,8 @@ std::pair<int, QByteArray> HttpClient::sendAuthRequest(const QString &url, const
 
     QNetworkRequest request(requestUrl);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
+    qDebug() << jsonDoc;
+    qDebug() << jsonDataBytes;
     //qDebug() << teknofestProperties->session();
     QNetworkReply *reply = manager.post(request, jsonDataBytes);
 
@@ -327,7 +335,7 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
     QByteArray postData = jsonDoc.toJson(QJsonDocument::Compact);
 
 
-    //qDebug() << postData;
+    qDebug() << postData;
     //qDebug() << teknofestProperties->session();
     //qDebug() << teknofestProperties->takimid();
     //qDebug() << "AKDJASKDJA " << teknofestProperties->takimid();
@@ -349,7 +357,6 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
     loop.exec(); // Wait until the network request is finished
 
     qDebug() << "Finished location data post";
-
     if (reply->error() == QNetworkReply::NoError) {
         qDebug() << "POST request successful";
         QByteArray message = reply->readAll();
@@ -360,7 +367,7 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
         // this line probably upsets qml. screw qml.
         planeController->setPlanes(list);
 
-        qDebug() << "Response: " << message;
+        //qDebug() << "Response: " << message;
     } else {
         qDebug() << "Error occurred 2: " << reply->errorString();
     }

@@ -18,9 +18,9 @@ public:
     Q_INVOKABLE std::vector<plane *> &planes();
     void setPlanes(const std::vector<plane *> &newPlanes);
 
-    plane* findSelected();
+    Q_INVOKABLE plane* findSelected();
 
-    plane* findPlane(int sysid);
+    Q_INVOKABLE plane* findPlane(int id);
 
     void removePlane(plane *plane);
     Q_INVOKABLE int selectedid() const;
@@ -43,6 +43,10 @@ public slots:
 
     void updateLocalYaw(int sysid, float yaw);
     void updateTeknoYaw(int teamid, float yaw);
+
+    void updateLocalSpeed(int sysid, float speed);
+
+    void updateLocalPressure(int sysid, float pressure);
 
     Q_INVOKABLE void changeLocalSelection(int sysid);
     Q_INVOKABLE void changeTeknoSelection(int teamid);

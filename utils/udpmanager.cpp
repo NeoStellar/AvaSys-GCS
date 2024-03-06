@@ -15,6 +15,19 @@ UDPReceiverThread::~UDPReceiverThread() {
     wait();
 }
 
+QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_image_captured_t &imageCaptured)
+{
+    const uint8_t* imageData = reinterpret_cast<const uint8_t*>(imageCaptured.capture_result);
+
+    // Calculate the size of the image data
+    int dataSize = 640 * 640 * 3; // Assuming RGB image
+
+    // Create a QByteArray and copy image data into it
+    QByteArray byteArray(reinterpret_cast<const char*>(imageData), dataSize);
+
+    return byteArray;
+}
+
 void UDPReceiverThread::run() {
     while (!isInterruptionRequested()) {
         uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -46,20 +59,57 @@ void UDPReceiverThread::run() {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
                     //qDebug() << "abc";
                     // Mavlink mesajını filtreleme
+                    float vx, vy, vz, speed, pressure;
                     switch (msg.msgid) {
-                        case MAVLINK_MSG_ID_HEARTBEAT:
+                        case MAVLINK_MSG_ID_SCALED_PRESSURE:
+                            //mavlink_highres_imu_t imu_data;
+                            //mavlink_msg_highres_imu_decode(&msg, &imu_data);
+                            //pressure = imu_data.abs_pressure;
+                            //altitude = imu_data.pressure_alt;
+                            mavlink_scaled_pressure_t scaled_pressure;
+                            mavlink_msg_scaled_pressure_decode(&msg, &scaled_pressure);
+
+                            pressure = scaled_pressure.press_abs;
+                            emit pressureDataReceived(msg.sysid, pressure);
+                            // Extract barometer data
+                            // Print barometer values
+                            //qDebug() << "Barometer - Pressure: " << pressure << " bar, Altitude: " << altitude << " m";
+                            break;
+                        case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
+                            mavlink_camera_image_captured_t imageCaptured;
+                            mavlink_msg_camera_image_captured_decode(&msg, &imageCaptured);
                             //qDebug() << "Received HEARTBEAT message";
                             //qDebug() << "Heartbeat from " << msg.sysid;
+                            qDebug() << "Received camera data";
+                            emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
                             break;
+                        case MAVLINK_MSG_ID_CAMERA_INFORMATION:
+                            //mavlink_camera_information_t info;
+                            break;
+                        case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
+                            mavlink_video_stream_status_t deneme;
+                            mavlink_msg_video_stream_status_decode(&msg, &deneme);
+                            qDebug() << "flags: " << deneme.flags;
+                            break;
+                        case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
+                            mavlink_local_position_ned_t local_pos;
+                            mavlink_msg_local_position_ned_decode(&msg, &local_pos);
 
-                        case MAVLINK_MSG_ID_SYS_STATUS:
-                            //qDebug() << msg.sysid;
-                            // Handle system status message
-                            //qDebug() << "Received SYS_STATUS message";
+                            // Extract speed components
+                            vx = local_pos.vx; // North velocity
+                            vy = local_pos.vy; // East velocity
+                            vz = local_pos.vz; // Down velocity
+
+                            speed = sqrt(vx * vx + vy * vy + vz * vz);
+                            // Print received speed
+                            //qDebug() << "Received speed: " << speed << " m/s";
+                            emit airspeedDataReceived(msg.sysid, speed);
                             break;
                         case MAVLINK_MSG_ID_ATTITUDE:
                             mavlink_attitude_t attitude;
                             mavlink_msg_attitude_decode(&msg, &attitude);
+
+
                             // Extract yaw (heading) from the received ATTITUDE message
                             //attitude.yaw;
                             //qDebug() << "Yaw [" << msg.sysid << "]: " << attitude.yaw;
@@ -95,6 +145,7 @@ void UDPReceiverThread::run() {
                             //qDebug() << "Longitude: " << fLong;
                             //qDebug() << "Altitude: " << fAlt;
                             break;
+
                     }
                 }
             }
@@ -211,6 +262,9 @@ int UDPManager::initialize(const QString& ipString, int port) {
     connect(m_receiverThread, &UDPReceiverThread::dataReceived, this, &UDPManager::handleReceivedData);
     connect(m_receiverThread, &UDPReceiverThread::locationDataRecieved, this, &UDPManager::locationDataRecieved);
     connect(m_receiverThread, &UDPReceiverThread::yawDataRecieved, this, &UDPManager::yawDataRecieved);
+    connect(m_receiverThread, &UDPReceiverThread::airspeedDataReceived, this, &UDPManager::airspeedDataReceived);
+    connect(m_receiverThread, &UDPReceiverThread::pressureDataReceived, this, &UDPManager::pressureDataReceived);
+    connect(m_receiverThread, &UDPReceiverThread::imageCapturedSignal, this, &UDPManager::imageCapturedSignal);
     m_receiverThread->start();
 
     m_mavlinkProperties->setSysid(1);

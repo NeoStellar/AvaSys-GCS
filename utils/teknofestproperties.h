@@ -19,7 +19,7 @@ public:
     QByteArray session() const;
     void setsession(const QByteArray &newSession_id);
 
-    bool simMode() const;
+    Q_INVOKABLE bool simMode() const;
     void setSimMode(bool newSimMode);
 
     std::vector<int> planeids() const;

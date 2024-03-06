@@ -6,6 +6,36 @@ QT += network
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 LIBS += -L/home/kardasland/QtProjects/AvaSys-GCS/openssl-1.1.1g/include -lcrypto -L/home/kardasland/QtProjects/AvaSys-GCS/openssl-1.1.1g -lssl
 LIBS += -ludev
+#LIBS += -lgstreamer-1.0
+#LIBS += -lglib-2.0
+#LIBS += -lgobject-2.0
+
+CONFIG += link_pkgconfig
+CONFIG += opencv4
+PKGCONFIG += opencv4
+PKGCONFIG += glib-2.0
+PKGCONFIG += gstreamer-1.0
+PKGCONFIG += gstreamer-app-1.0
+PKGCONFIG += gobject-2.0
+PKGCONFIG += gstreamer-pbutils-1.0
+#PKGCONFIG += glib-2.0 gobject-2.0
+#PKGCONFIG += gstreamer-1.0 glib-2.0 gobject-2.0
+
+#INCLUDEPATH += /usr/include/opencv4/opencv2
+
+#LIBS += -L/usr/include -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_shape -lopencv_videoio -lgobject-2.0 -lgstreamer-1.0
+#LIBS += -L/usr/local/lib -lopencv_core -lopencv_imgcodecs -lopencv_highgui -lopencv_shape -lopencv_videoio -lgobject-2.0
+# Add GStreamer include path
+INCLUDEPATH += /usr/include/gstreamer-1.0
+#INCLUDEPATH += /usr/include/glib-2.0
+#INCLUDEPATH += /usr/lib/x86_64-linux-gnu/glib-2.0/include
+INCLUDEPATH += pkg-config --cflags glib-2.0
+
+#LIBS += -L/lib/x86_64-linux-gnu -lgobject-2.0 -lglib-2.0 -lgstreamer-1.0
+# Link against GStreamer libraries
+#LIBS += -lgstreamer-1.0
+
+#LIBS +=
 #LIBS += -/home/kardasland/QtProjects/AvaSys-GCS/mavlink-out
 
 SOURCES += \
@@ -17,7 +47,8 @@ SOURCES += \
         utils/mavlinkproperties.cpp \
         utils/teknofestproperties.cpp \
         utils/udpmanager.cpp \
-        utils/utils.cpp
+        utils/utils.cpp \
+        video/videoitem.cpp
 
 RESOURCES += qml.qrc
 
@@ -534,4 +565,5 @@ HEADERS += \
     utils/httpclient.h \
     utils/mavlinkproperties.h \
     utils/teknofestproperties.h \
-    utils/udpmanager.h
+    utils/udpmanager.h \
+    video/videoitem.h

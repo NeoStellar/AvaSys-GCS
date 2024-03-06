@@ -49,6 +49,10 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_udpManager, &UDPManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
     connect(&m_udpManager, &UDPManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
     connect(&m_udpManager, &UDPManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
+    connect(&m_udpManager, &UDPManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
+    connect(&m_udpManager, &UDPManager::pressureDataReceived, this, &MavLinkUDP::pressureDataReceived);
+    connect(&m_udpManager, &UDPManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
+
 
 
     // Connect signals from MavLinkProperties to MavLink
@@ -104,12 +108,18 @@ void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude
     }else {
         m_planeController->setTeam(sysid, m_teknofestProperties->takimid());
     }
-    m_planeController->AoULocalPlane(sysid, latitude, longitude, 10);
+    m_planeController->AoULocalPlane(sysid, latitude, longitude, altitude);
     //qDebug() << "locdata: " << m_planeController->findPlane(sysid)->teamid();
 }
 
 void MavLinkUDP::yawDataRecieved(int sysid, float yaw){
     m_planeController->updateLocalYaw(sysid, yaw);
+}
+void MavLinkUDP::airspeedDataReceived(int id, float speed){
+    m_planeController->updateLocalSpeed(id, speed);
+}
+void MavLinkUDP::pressureDataReceived(int id, float pressure){
+    m_planeController->updateLocalPressure(id, pressure);
 }
 
 
@@ -128,10 +138,8 @@ void MavLinkUDP::sendHeartbeat() {
 
         send_heartbeat();
         plane* pl = m_planeController->planes()[0];
-        plane::LocationData locData = pl->locationData();
-        locData.gpsSaati = QDateTime::currentDateTime();
         pl->setTeamid(m_teknofestProperties->takimid());
-        pl->setLocationData(locData);
+        pl->setGpsSaati(QDateTime::currentDateTime());
         //plane* plane = m_planeController->findPlane(pl->sysid());
         //plane* plane = createDummyPlane();
         QJsonObject data = pl->toJson();
@@ -145,7 +153,7 @@ plane* MavLinkUDP::createDummyPlane(){
     plane->setLatitude(-122.25474548339844);
     plane->setLongitude(37.52430725097656);
     plane->setYaw(2);
-    plane::LocationData locationData;
+    /*plane::LocationData locationData;
     locationData.gpsSaati = QDateTime::currentDateTime();
     locationData.hedefGenislik = 0;
     locationData.hedefMerkezX = 0;
@@ -163,7 +171,7 @@ plane* MavLinkUDP::createDummyPlane(){
     locationData.ihaYonelme = plane->yaw();
     locationData.takimNumarasi = m_teknofestProperties->takimid();
 
-    plane->setLocationData(locationData);
+    plane->setLocationData(locationData);*/
     return plane;
 }
 
@@ -192,6 +200,7 @@ int MavLinkUDP::send_heartbeat()
             //qDebug() << "HEARTBEAT message sent! \n";
             return 0;
         }
+
     }else{
         //qDebug() << "[INFO] Socket connection is not set yet! Use open_socket() \n";
         return -1;

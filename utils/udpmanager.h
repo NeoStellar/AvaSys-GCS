@@ -1,6 +1,7 @@
 #ifndef UDPMANAGER_H
 #define UDPMANAGER_H
 
+#include "mavlink-out/common/mavlink.h"
 #include "mavlinkproperties.h"
 
 #include <QObject>
@@ -15,11 +16,15 @@ class UDPReceiverThread : public QThread {
 public:
     explicit UDPReceiverThread(int socket_fd, QObject *parent = nullptr);
     ~UDPReceiverThread();
+    QByteArray convertImageToQByteArray(const mavlink_camera_image_captured_t& imageCaptured);
 
 signals:
     void dataReceived(const QByteArray &data);
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
+    void airspeedDataReceived(int id, float speed);
+    void pressureDataReceived(int id, float pressure);
+    void imageCapturedSignal(int width, int height, QByteArray imageData);
 
 protected:
     void run() override;
@@ -56,7 +61,10 @@ signals:
     void dataReceived(const QByteArray& data);
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
+    void airspeedDataReceived(int id, float speed);
+    void pressureDataReceived(int id, float pressure);
     void onConnected();
+    void imageCapturedSignal(int width, int height, QByteArray imageData);
 public slots:
     void onErrorOccurred(int errorCode);
     void onDisconnect();

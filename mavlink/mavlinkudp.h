@@ -39,9 +39,11 @@ signals:
     // New signals specific to MavLink
     void connected();
 
-
+    void imageCapturedSignal(int width, int height, QByteArray imageData);
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
+    void airspeedDataReceived(int id, float speed);
+    void pressureDataReceived(int id, float pressure);
     void armedChanged(bool armed);
     void errorOccurred(int errorCode);
     //void dataReceived(const ssize_t &data);

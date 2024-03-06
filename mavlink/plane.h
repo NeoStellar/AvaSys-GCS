@@ -15,15 +15,38 @@ class plane : public QObject
     Q_PROPERTY(float yaw READ yaw WRITE setYaw NOTIFY yawChanged FINAL)
     Q_PROPERTY(bool isSelected READ isSelected WRITE setIsSelected NOTIFY isSelectedChanged FINAL)
     Q_PROPERTY(int teamid READ teamid WRITE setTeamid NOTIFY teamidChanged FINAL)
+    Q_PROPERTY(float airspeed READ airspeed WRITE setAirspeed NOTIFY airspeedChanged FINAL)
+    Q_PROPERTY(float pressure READ pressure WRITE setPressure NOTIFY pressureChanged FINAL)
+    //Q_PROPERTY(LocationData locationData READ locationData WRITE setLocationData NOTIFY locationDataChanged)
+    Q_PROPERTY(QDateTime gpsSaati READ gpsSaati WRITE setGpsSaati NOTIFY gpsSaatiChanged FINAL)
+    Q_PROPERTY(int hedefGenislik READ hedefGenislik WRITE setHedefGenislik NOTIFY hedefGenislikChanged FINAL)
+    Q_PROPERTY(int hedefMerkezX READ hedefMerkezX WRITE setHedefMerkezX NOTIFY hedefMerkezXChanged FINAL)
+    Q_PROPERTY(int hedefMerkezY READ hedefMerkezY WRITE setHedefMerkezY NOTIFY hedefMerkezYChanged FINAL)
+    Q_PROPERTY(int hedefYukseklik READ hedefYukseklik WRITE setHedefYukseklik NOTIFY hedefYukseklikChanged FINAL)
+    Q_PROPERTY(int ihaBatarya READ ihaBatarya WRITE setIhaBatarya NOTIFY ihaBataryaChanged FINAL)
+    Q_PROPERTY(double ihaBoylam READ ihaBoylam WRITE setIhaBoylam NOTIFY ihaBoylamChanged FINAL)
+    Q_PROPERTY(double ihaDikilme READ ihaDikilme WRITE setIhaDikilme NOTIFY ihaDikilmeChanged FINAL)
+    Q_PROPERTY(double ihaEnlem READ ihaEnlem WRITE setIhaEnlem NOTIFY ihaEnlemChanged FINAL)
+    Q_PROPERTY(double ihaHiz READ ihaHiz WRITE setIhaHiz NOTIFY ihaHizChanged FINAL)
+    Q_PROPERTY(double ihaIrtifa READ ihaIrtifa WRITE setIhaIrtifa NOTIFY ihaIrtifaChanged FINAL)
+    Q_PROPERTY(int ihaKilitlenme READ ihaKilitlenme WRITE setIhaKilitlenme NOTIFY ihaKilitlenmeChanged FINAL)
+    Q_PROPERTY(int ihaOtonom READ ihaOtonom WRITE setIhaOtonom NOTIFY ihaOtonomChanged FINAL)
+    Q_PROPERTY(double ihaYatis READ ihaYatis WRITE setIhaYatis NOTIFY ihaYatisChanged FINAL)
+    Q_PROPERTY(double ihaYonelme READ ihaYonelme WRITE setIhaYonelme NOTIFY ihaYonelmeChanged FINAL)
 public:
+
+    /*
     struct LocationData {
+        Q_GADGET
+        Q_PROPERTY(double ihaBoylam MEMBER ihaBoylam)
+    public:
         QDateTime gpsSaati;
         int hedefGenislik;
         int hedefMerkezX;
         int hedefMerkezY;
         int hedefYukseklik;
         int ihaBatarya;
-        double ihaBoylam;
+        Q_INVOKABLE double ihaBoylam;
         double ihaDikilme;
         double ihaEnlem;
         double ihaHiz;
@@ -33,12 +56,12 @@ public:
         double ihaYatis;
         double ihaYonelme;
         int takimNumarasi;
-    };
+    }; */
 
     // Getter and setter methods for location data
-    Q_INVOKABLE const LocationData &locationData() const;
+    /*Q_INVOKABLE const LocationData locationData() const;
     void setLocationData(const LocationData& data);
-
+    */
     explicit plane(QObject *parent = nullptr);
 
     Q_INVOKABLE int sysid() const;
@@ -63,10 +86,61 @@ public:
 
     QJsonObject toJson() const;
 
-    int teamid() const;
+    Q_INVOKABLE int teamid() const;
     void setTeamid(int newTeamid);
 
-    int getUniqueIdentifier();
+    Q_INVOKABLE int getUniqueIdentifier() const;
+
+    Q_INVOKABLE float airspeed() const;
+    void setAirspeed(float newAirspeed);
+
+    Q_INVOKABLE float pressure() const;
+    void setPressure(float newPressure);
+
+    Q_INVOKABLE QDateTime gpsSaati() const;
+    void setGpsSaati(const QDateTime &newGpsSaati);
+
+    Q_INVOKABLE int hedefGenislik() const;
+    void setHedefGenislik(int newHedefGenislik);
+
+    Q_INVOKABLE int hedefMerkezX() const;
+    void setHedefMerkezX(int newHedefMerkezX);
+
+    Q_INVOKABLE int hedefMerkezY() const;
+    void setHedefMerkezY(int newHedefMerkezY);
+
+    Q_INVOKABLE int hedefYukseklik() const;
+    void setHedefYukseklik(int newHedefYukseklik);
+
+    Q_INVOKABLE int ihaBatarya() const;
+    void setIhaBatarya(int newIhaBatarya);
+
+    Q_INVOKABLE double ihaBoylam() const;
+    void setIhaBoylam(double newIhaBoylam);
+
+    Q_INVOKABLE double ihaEnlem() const;
+    void setIhaEnlem(double newIhaEnlem);
+
+    Q_INVOKABLE double ihaHiz() const;
+    void setIhaHiz(double newIhaHiz);
+
+    Q_INVOKABLE double ihaIrtifa() const;
+    void setIhaIrtifa(double newIhaIrtifa);
+
+    Q_INVOKABLE int ihaKilitlenme() const;
+    void setIhaKilitlenme(int newIhaKilitlenme);
+
+    Q_INVOKABLE int ihaOtonom() const;
+    void setIhaOtonom(int newIhaOtonom);
+
+    Q_INVOKABLE double ihaYatis() const;
+    void setIhaYatis(double newIhaYatis);
+
+    Q_INVOKABLE double ihaYonelme() const;
+    void setIhaYonelme(double newIhaYonelme);
+
+    Q_INVOKABLE double ihaDikilme() const;
+    void setIhaDikilme(double newIhaDikilme);
 
 signals:
 
@@ -86,6 +160,42 @@ signals:
 
     void teamidChanged();
 
+    void airspeedChanged();
+
+    void pressureChanged();
+
+    void locationDataChanged();
+
+    void gpsSaatiChanged();
+
+    void hedefGenislikChanged();
+
+    void hedefMerkezXChanged();
+
+    void hedefMerkezYChanged();
+
+    void hedefYukseklikChanged();
+
+    void ihaBataryaChanged();
+
+    void ihaBoylamChanged();
+
+    void ihaEnlemChanged();
+
+    void ihaHizChanged();
+
+    void ihaIrtifaChanged();
+
+    void ihaKilitlenmeChanged();
+
+    void ihaOtonomChanged();
+
+    void ihaYatisChanged();
+
+    Q_INVOKABLE void ihaYonelmeChanged();
+
+    void ihaDikilmeChanged();
+
 private:
     int m_sysid;
 
@@ -94,8 +204,28 @@ private:
     int32_t m_altitude;
     float m_yaw;
     bool m_isSelected;
-    LocationData m_locationData;
+    //LocationData m_locationData;
     int m_teamid;
-};
+    float m_airspeed;
+    float m_pressure;
 
+
+
+
+    QDateTime m_gpsSaati;
+    int m_hedefGenislik;
+    int m_hedefMerkezX;
+    int m_hedefMerkezY;
+    int m_hedefYukseklik;
+    int m_ihaBatarya;
+    double m_ihaBoylam;
+    double m_ihaEnlem;
+    double m_ihaHiz;
+    double m_ihaIrtifa;
+    int m_ihaKilitlenme;
+    int m_ihaOtonom;
+    double m_ihaYatis;
+    double m_ihaYonelme;
+    double m_ihaDikilme;
+};
 #endif // PLANE_H

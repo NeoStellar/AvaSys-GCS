@@ -75,6 +75,7 @@ void PlaneController::setPlanes(const std::vector<plane *> &newPlanes)
     if (m_planes == newPlanes)
         return;
     m_planes = newPlanes;
+    qDebug() << "planes size: " << m_planes.size();
     emit planesChanged();
 }
 
@@ -88,16 +89,21 @@ plane *PlaneController::findSelected()
     return nullptr;
 }
 
-plane *PlaneController::findPlane(int teamid)
+plane *PlaneController::findPlane(int id)
 {
     //qDebug() << sysid;
     for (plane* plane : m_planes) {
-        if (plane->teamid() == teamid) {
-            //qDebug() << plane->locationData().hedefMerkezY;
-            plane::LocationData locationData = plane->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            plane->setLocationData(locationData);
+        if(plane->teamid() == -1){
+            plane->setGpsSaati(QDateTime::currentDateTime());
+            qDebug() << "plane: " << plane->sysid();
             return plane;
+        }else if (plane->teamid() == id) {
+            //qDebug() << plane->locationData().hedefMerkezY;
+            plane->setGpsSaati(QDateTime::currentDateTime());
+            qDebug() << "plane team: " << plane->teamid();
+            return plane;
+        }else {
+            qDebug() << "tf is this: " << plane->yaw();
         }
     }
     return nullptr;
@@ -126,9 +132,7 @@ void PlaneController::addOrUpdatePlane(int teamid, double latitude, double longi
         if (p->getUniqueIdentifier() == teamid) {
             //qDebug() << "Updating plane: " << sysid << " from m_planes";
             updatePlane(teamid, latitude, longitude, altitude);
-            plane::LocationData locationData = p->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            p->setLocationData(locationData);
+            p->setGpsSaati(QDateTime::currentDateTime());
             found = true;
             break;
         }
@@ -171,12 +175,11 @@ void PlaneController::AoULocalPlane(int sysid, double latitude, double longitude
         if (p->sysid() == sysid) {
             //qDebug() << "Updating plane: " << sysid << " from m_planes";
             updateLocalPlane(sysid, latitude, longitude, altitude);
-            plane::LocationData locationData = p->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            p->setLocationData(locationData);
+            p->setGpsSaati(QDateTime::currentDateTime());
             found = true;
             break;
         }
+        emit planesChanged();
         //qDebug() << "Sysid: " << p->sysid();
         //qDebug() << "Yaw: " << p->yaw();
         if(p->sysid() == 1){
@@ -208,6 +211,7 @@ void PlaneController::updateLocalPlane(int sysid, double latitude, double longit
             //qDebug() << "found";
             //plane->setIsSelected(findSelected()->sysid() == sysid);
             plane->updateLocation(latitude, longitude, altitude);
+            emit planesChanged();
             return;
         }
     }
@@ -219,6 +223,7 @@ void PlaneController::updateTeknoPlane(int teamid, double latitude, double longi
         if (plane->teamid() == teamid) {
             //plane->setIsSelected(findSelected()->sysid() == sysid);
             plane->updateLocation(latitude, longitude, altitude);
+            emit planesChanged();
             return;
         }
     }
@@ -230,9 +235,7 @@ void PlaneController::AoUTeknoPlane(int teamid, double latitude, double longitud
         if (p->teamid() == teamid) {
             //qDebug() << "Updating plane: " << sysid << " from m_planes";
             updateTeknoPlane(teamid, latitude, longitude, altitude);
-            plane::LocationData locationData = p->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            p->setLocationData(locationData);
+            p->setGpsSaati(QDateTime::currentDateTime());
             found = true;
             break;
         }
@@ -299,10 +302,9 @@ void PlaneController::updateYaw(int teamid, float yaw)
 {
     for (plane *plane : m_planes) {
         if (plane->getUniqueIdentifier() == teamid) {
-            plane::LocationData locationData = plane->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            plane->setLocationData(locationData);
+            plane->setGpsSaati(QDateTime::currentDateTime());
             plane->setYaw(yaw);
+            emit planesChanged();
             return;
         }
     }
@@ -317,10 +319,9 @@ void PlaneController::updateLocalYaw(int sysid, float yaw)
             updateTeknoYaw(plane->teamid(), yaw);
         }
         if (plane->sysid() == sysid) {
-            plane::LocationData locationData = plane->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            plane->setLocationData(locationData);
+            plane->setGpsSaati(QDateTime::currentDateTime());
             plane->setYaw(yaw);
+            emit planesChanged();
             return;
         }
     }
@@ -330,11 +331,33 @@ void PlaneController::updateTeknoYaw(int teamid, float yaw)
 {
     for (plane *plane : m_planes) {
         if (plane->teamid() == teamid) {
-            plane::LocationData locationData = plane->locationData();
-            locationData.gpsSaati = QDateTime::currentDateTime();
-            plane->setLocationData(locationData);
+            plane->setGpsSaati(QDateTime::currentDateTime());
             plane->setYaw(yaw);
+            emit planesChanged();
             return;
+        }
+    }
+}
+
+void PlaneController::updateLocalSpeed(int sysid, float speed)
+{
+    //qDebug() << "updating local speed";
+    for (plane* plane : m_planes){
+        if(plane->sysid() == sysid){
+            //qDebug() << "found plane";
+            plane->setAirspeed(speed);
+            emit planesChanged();
+            return;
+        }
+    }
+}
+
+void PlaneController::updateLocalPressure(int sysid, float pressure)
+{
+    for(plane* plane: m_planes){
+        if(plane->sysid() == sysid){
+            plane->setPressure(pressure);
+            emit planesChanged();
         }
     }
 }
@@ -350,7 +373,7 @@ void PlaneController::changeLocalSelection(int sysid)
                 m_selectedid = -3;
             }else {
                 plane->setIsSelected(true);
-                m_selectedid = plane->teamid();
+                m_selectedid = plane->sysid();
             }
         }
         /*if (plane->sysid() != selectedid){
@@ -360,15 +383,17 @@ void PlaneController::changeLocalSelection(int sysid)
             plane->setIsSelected(true);
             setSelectedid(plane->sysid());
         } */
-        qDebug() << "Selected id: " << m_selectedid;
+        //qDebug() << "Selected id: " << m_selectedid;
     }
+    emit planesChanged();
+    qDebug() << "Selected id: " << sysid;
 }
 
 void PlaneController::changeTeknoSelection(int teamid)
 {
     qDebug() << "issued";
     for (plane* plane : m_planes){
-        if(plane->sysid() != -1){
+         if(plane->sysid() != -1){
             changeLocalSelection(plane->sysid());
             return;
         }
@@ -388,6 +413,7 @@ void PlaneController::changeTeknoSelection(int teamid)
             plane->setIsSelected(true);
             setSelectedid(plane->sysid());
         } */
+        emit planesChanged();
         qDebug() << "Selected id: " << m_selectedid;
     }
 }

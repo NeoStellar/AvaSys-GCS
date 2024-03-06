@@ -1,17 +1,7 @@
 #include "plane.h"
 #include "qdebug.h"
-#include <cmath>
 #include <QJsonObject>
 #include <QJsonDocument>
-const plane::LocationData &plane::locationData() const
-{
-    return m_locationData;
-}
-
-void plane::setLocationData(const LocationData &data)
-{
-    m_locationData = data;
-}
 
 plane::plane(QObject *parent)
     : QObject{parent}, m_isSelected(false)
@@ -31,9 +21,6 @@ void plane::setSysid(int newSysid)
     m_sysid = newSysid;
     emit sysidChanged();
 }
-
-
-
 
 float plane::longitude() const
 {
@@ -89,6 +76,8 @@ void plane::updateLocation(double newLatitude, double newLongitude, int newAltit
     m_longitude = newLongitude;
     m_altitude = newAltitude;
 
+    //qDebug() << "long: " << m_longitude;
+
     // Emit signals to notify any connected slots
     emit latitudeChanged();
     emit longitudeChanged();
@@ -112,7 +101,7 @@ void plane::setYaw(float newYaw)
     if (qFuzzyCompare(m_yaw, newYaw))
         return;
     m_yaw = newYaw;
-    m_locationData.ihaYonelme = m_yaw;
+    m_ihaYonelme = m_yaw;
     //qDebug() << m_sysid << ":" << m_yaw;
     emit yawChanged();
     //emit locationChanged(m_sysid, m_longitude, m_latitude, m_altitude);
@@ -138,8 +127,8 @@ QJsonObject plane::toJson() const{
     QJsonObject locationJson;
     //m_locationData.gpsSaati = QDateTime::currentDateTime();
     QJsonObject locationDataObject;
-    /*
-    if(!m_locationData.gpsSaati.isNull()){
+
+    if(!m_gpsSaati.isNull()){
         locationDataObject["dakika"] = QDateTime::currentDateTime().time().minute();
         locationDataObject["milisaniye"] = QDateTime::currentDateTime().time().msec();
         locationDataObject["saat"] = QDateTime::currentDateTime().time().hour();
@@ -147,12 +136,12 @@ QJsonObject plane::toJson() const{
         locationJson["gps_saati"] = locationDataObject;
 
     }else {
-        locationDataObject["dakika"] = m_locationData.gpsSaati.time().minute();
-        locationDataObject["milisaniye"] = m_locationData.gpsSaati.time().msec();
-        locationDataObject["saat"] = m_locationData.gpsSaati.time().hour();
-        locationDataObject["saniye"] = m_locationData.gpsSaati.time().second();
+        locationDataObject["dakika"] = m_gpsSaati.time().minute();
+        locationDataObject["milisaniye"] = m_gpsSaati.time().msec();
+        locationDataObject["saat"] = m_gpsSaati.time().hour();
+        locationDataObject["saniye"] = m_gpsSaati.time().second();
         locationJson["gps_saati"] = locationDataObject;
-    }*/
+    }
 
     locationJson["hedef_genislik"] = 10; //m_locationData.hedefGenislik;
     locationJson["hedef_merkez_X"] = 20; //m_locationData.hedefMerkezX;
@@ -160,15 +149,16 @@ QJsonObject plane::toJson() const{
     locationJson["hedef_yukseklik"] = 31; //m_locationData.hedefYukseklik;
     locationJson["iha_batarya"] = 99; //m_locationData.ihaBatarya;
     locationJson["iha_boylam"] = m_longitude;
-    locationJson["iha_dikilme"] = 50; //m_locationData.ihaDikilme;
+
+    locationJson["iha_dikilme"] = (int) m_pressure; //m_locationData.ihaDikilme;
     locationJson["iha_enlem"] = m_latitude;
-    locationJson["iha_hiz"] = 30; //m_locationData.ihaHiz;
-    locationJson["iha_irtifa"] = m_altitude;
+    locationJson["iha_hiz"] = (int) m_airspeed; //m_locationData.ihaHiz;
+    locationJson["iha_irtifa"] = (int) m_altitude;
     locationJson["iha_kilitlenme"] = 40; //m_locationData.ihaKilitlenme;
     locationJson["iha_otonom"] = 20; //m_locationData.ihaOtonom;
     locationJson["iha_yatis"] = 20; //m_locationData.ihaYatis;
     locationJson["iha_yonelme"] = m_yaw;
-    qDebug() << "a: " << m_teamid;
+    //qDebug() << "a: " << m_teamid;
     locationJson["takim_numarasi"] = m_teamid;
 
     json = locationJson;
@@ -189,7 +179,230 @@ void plane::setTeamid(int newTeamid)
     emit teamidChanged();
 }
 
-int plane::getUniqueIdentifier()
+int plane::getUniqueIdentifier() const
 {
+    qDebug() << m_teamid;
     return m_teamid == -1 ? m_sysid : m_teamid;
+}
+
+
+float plane::airspeed() const
+{
+    return m_airspeed;
+}
+
+void plane::setAirspeed(float newAirspeed)
+{
+    if (qFuzzyCompare(m_airspeed, newAirspeed))
+        return;
+    m_airspeed = newAirspeed;
+    emit airspeedChanged();
+}
+
+float plane::pressure() const
+{
+    return m_pressure;
+}
+
+void plane::setPressure(float newPressure)
+{
+    if (qFuzzyCompare(m_pressure, newPressure))
+        return;
+    m_pressure = newPressure;
+    emit pressureChanged();
+}
+
+QDateTime plane::gpsSaati() const
+{
+    return m_gpsSaati;
+}
+
+void plane::setGpsSaati(const QDateTime &newGpsSaati)
+{
+    if (m_gpsSaati == newGpsSaati)
+        return;
+    m_gpsSaati = newGpsSaati;
+    emit gpsSaatiChanged();
+}
+
+int plane::hedefGenislik() const
+{
+    return m_hedefGenislik;
+}
+
+void plane::setHedefGenislik(int newHedefGenislik)
+{
+    if (m_hedefGenislik == newHedefGenislik)
+        return;
+    m_hedefGenislik = newHedefGenislik;
+    emit hedefGenislikChanged();
+}
+
+int plane::hedefMerkezX() const
+{
+    return m_hedefMerkezX;
+}
+
+void plane::setHedefMerkezX(int newHedefMerkezX)
+{
+    if (m_hedefMerkezX == newHedefMerkezX)
+        return;
+    m_hedefMerkezX = newHedefMerkezX;
+    emit hedefMerkezXChanged();
+}
+
+int plane::hedefMerkezY() const
+{
+    return m_hedefMerkezY;
+}
+
+void plane::setHedefMerkezY(int newHedefMerkezY)
+{
+    if (m_hedefMerkezY == newHedefMerkezY)
+        return;
+    m_hedefMerkezY = newHedefMerkezY;
+    emit hedefMerkezYChanged();
+}
+
+int plane::hedefYukseklik() const
+{
+    return m_hedefYukseklik;
+}
+
+void plane::setHedefYukseklik(int newHedefYukseklik)
+{
+    if (m_hedefYukseklik == newHedefYukseklik)
+        return;
+    m_hedefYukseklik = newHedefYukseklik;
+    emit hedefYukseklikChanged();
+}
+
+int plane::ihaBatarya() const
+{
+    return m_ihaBatarya;
+}
+
+void plane::setIhaBatarya(int newIhaBatarya)
+{
+    if (m_ihaBatarya == newIhaBatarya)
+        return;
+    m_ihaBatarya = newIhaBatarya;
+    emit ihaBataryaChanged();
+}
+
+double plane::ihaBoylam() const
+{
+    return m_ihaBoylam;
+}
+
+void plane::setIhaBoylam(double newIhaBoylam)
+{
+    if (qFuzzyCompare(m_ihaBoylam, newIhaBoylam))
+        return;
+    m_ihaBoylam = newIhaBoylam;
+    emit ihaBoylamChanged();
+}
+
+double plane::ihaEnlem() const
+{
+    return m_ihaEnlem;
+}
+
+void plane::setIhaEnlem(double newIhaEnlem)
+{
+    if (qFuzzyCompare(m_ihaEnlem, newIhaEnlem))
+        return;
+    m_ihaEnlem = newIhaEnlem;
+    emit ihaEnlemChanged();
+}
+
+double plane::ihaHiz() const
+{
+    return m_ihaHiz;
+}
+
+void plane::setIhaHiz(double newIhaHiz)
+{
+    if (qFuzzyCompare(m_ihaHiz, newIhaHiz))
+        return;
+    m_ihaHiz = newIhaHiz;
+    emit ihaHizChanged();
+}
+
+double plane::ihaIrtifa() const
+{
+    return m_ihaIrtifa;
+}
+
+void plane::setIhaIrtifa(double newIhaIrtifa)
+{
+    if (qFuzzyCompare(m_ihaIrtifa, newIhaIrtifa))
+        return;
+    m_ihaIrtifa = newIhaIrtifa;
+    emit ihaIrtifaChanged();
+}
+
+int plane::ihaKilitlenme() const
+{
+    return m_ihaKilitlenme;
+}
+
+void plane::setIhaKilitlenme(int newIhaKilitlenme)
+{
+    if (m_ihaKilitlenme == newIhaKilitlenme)
+        return;
+    m_ihaKilitlenme = newIhaKilitlenme;
+    emit ihaKilitlenmeChanged();
+}
+
+int plane::ihaOtonom() const
+{
+    return m_ihaOtonom;
+}
+
+void plane::setIhaOtonom(int newIhaOtonom)
+{
+    if (m_ihaOtonom == newIhaOtonom)
+        return;
+    m_ihaOtonom = newIhaOtonom;
+    emit ihaOtonomChanged();
+}
+
+double plane::ihaYatis() const
+{
+    return m_ihaYatis;
+}
+
+void plane::setIhaYatis(double newIhaYatis)
+{
+    if (qFuzzyCompare(m_ihaYatis, newIhaYatis))
+        return;
+    m_ihaYatis = newIhaYatis;
+    emit ihaYatisChanged();
+}
+
+double plane::ihaYonelme() const
+{
+    return m_ihaYonelme;
+}
+
+void plane::setIhaYonelme(double newIhaYonelme)
+{
+    if (qFuzzyCompare(m_ihaYonelme, newIhaYonelme))
+        return;
+    m_ihaYonelme = newIhaYonelme;
+    emit ihaYonelmeChanged();
+}
+
+double plane::ihaDikilme() const
+{
+    return m_ihaDikilme;
+}
+
+void plane::setIhaDikilme(double newIhaDikilme)
+{
+    if (qFuzzyCompare(m_ihaDikilme, newIhaDikilme))
+        return;
+    m_ihaDikilme = newIhaDikilme;
+    emit ihaDikilmeChanged();
 }
