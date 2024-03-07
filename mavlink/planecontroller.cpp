@@ -455,3 +455,13 @@ void PlaneController::setSelectedid(int newSelectedid)
     m_selectedid = newSelectedid;
     //emit selectedidChanged();
 }
+
+plane *PlaneController::findMainPlane(int id)
+{
+    for(plane* plane : m_planes){
+        if(plane->sysid() != -1 && plane->sysid() == id){
+            return plane;
+        }
+    }
+    return nullptr;
+}

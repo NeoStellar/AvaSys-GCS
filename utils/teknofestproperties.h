@@ -25,6 +25,8 @@ public:
     std::vector<int> planeids() const;
     void setPlaneids(const std::vector<int> &newPlaneids);
 
+    void addPlane(int id);
+
 signals:
     void takimidChanged();
 

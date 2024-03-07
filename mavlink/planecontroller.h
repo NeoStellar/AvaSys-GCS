@@ -26,6 +26,8 @@ public:
     Q_INVOKABLE int selectedid() const;
     void setSelectedid(int newSelectedid);
 
+
+    Q_INVOKABLE plane *findMainPlane(int id);
 public slots:
     void addPlane(int sysid, double latitude, double longitude, int altitude);
     void removePlane(int sysid);

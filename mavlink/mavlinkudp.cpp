@@ -109,6 +109,8 @@ void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude
         m_planeController->setTeam(sysid, m_teknofestProperties->takimid());
     }
     m_planeController->AoULocalPlane(sysid, latitude, longitude, altitude);
+
+    m_teknofestProperties->addPlane(sysid);
     //qDebug() << "locdata: " << m_planeController->findPlane(sysid)->teamid();
 }
 
@@ -244,4 +246,13 @@ void MavLinkUDP::armedChanged(bool armed){
 TeknofestProperties *MavLinkUDP::teknofestProperties() const
 {
     return m_teknofestProperties;
+}
+
+plane *MavLinkUDP::findMainPlane()
+{
+    if (!m_teknofestProperties->planeids().empty()){
+        return m_planeController->findMainPlane(m_teknofestProperties->planeids()[0]);
+    }else{
+        return nullptr;
+    }
 }

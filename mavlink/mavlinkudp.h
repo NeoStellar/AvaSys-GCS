@@ -27,7 +27,7 @@ public:
     ~MavLinkUDP();
     int send_heartbeat();
     TeknofestProperties *teknofestProperties() const;
-
+    Q_INVOKABLE plane* findMainPlane();
     plane *createDummyPlane();
 signals:
     // Inherited signals from UDPManager

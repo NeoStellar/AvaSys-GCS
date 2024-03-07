@@ -18,18 +18,52 @@ Window {
         id: rightPanel
     }
 
-    VideoItem {
-        id: video
+
+    Rectangle {
+        id: videoRect
+        //opacity: 0.8
+        radius: 10
         anchors {
-            top: topBar.bottom
-            right: topBar.right
+            right: bottomPanel1.right
+            bottom: bottomPanel1.top
         }
         width: 370
         height: 240
-        Component.onCompleted: {
-            video.start_gst()
+        color: "black"
+
+
+        VideoItem {
+            id: video
+            //opacity: 1
+            anchors {
+                //fill: parent
+                //centerIn: videoRect
+                leftMargin: 5
+                rightMargin: 5
+                topMargin: 5
+                bottomMargin: 5
+                top: videoRect.top
+                bottom: videoRect.bottom
+                left: videoRect.left
+                right: videoRect.right
+            }
+            Component.onCompleted: {
+                video.start_gst()
+            }
+        }
+        Text {
+            id: cameraText
+            color: "white"
+            anchors {
+                top: videoRect.top
+                topMargin: 5
+                horizontalCenter: videoRect.horizontalCenter
+            }
+            text: "Camera Feed"
         }
     }
+
+
 
     Rectangle {
         id: popup
@@ -155,7 +189,6 @@ Window {
                 }catch (error){
                     return "Plane Unidentified.";
                 }
-
             }
         }
         Connections {
@@ -355,6 +388,109 @@ Window {
         }
         height: rightPanel.height / 12
         color: "black"
+        /*
+        var longitute = plane.longitude.toFixed(4);
+        var latitude = plane.latitude.toFixed(4);
+        var altitude = plane.altitude.toFixed(4);
+        var yaw = plane.yaw;
+        var airspeed = plane.airspeed.toFixed(4);
+        var localText = "boylam: " + longitute + "\n"
+                + "enlem: " + latitude + "\n"
+                + "hiz: " +  airspeed + "\n"
+                + "irtifa: " + altitude + "\n"
+                + "yaw: " + yaw + "\n"
+                + "pressure: " + plane.pressure.toFixed(2) + " Bar";
+          */
+        Text {
+            id: bt
+            anchors {
+                left: bottomPanel1.left
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                leftMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "boylam: " + mavlinkHandler.findMainPlane().longitude.toFixed(4) + "°";
+            }
+        }
+        Text {
+            id: et
+            anchors {
+                left: bt.right
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                leftMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "enlem: " + mavlinkHandler.findMainPlane().latitude.toFixed(4) + "°";
+            }
+        }
+        Text {
+            id: at
+            anchors {
+                left: et.right
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                leftMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "irtifa: " + mavlinkHandler.findMainPlane().altitude.toFixed(2) + " m";
+            }
+        }
+        Text {
+            id: yt
+            anchors {
+                right: bottomPanel1.right
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                rightMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "yaw: " + mavlinkHandler.findMainPlane().yaw + "°";
+            }
+        }
+        Text {
+            id: pt
+            anchors {
+                right: yt.left
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                rightMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "pressure: " + mavlinkHandler.findMainPlane().pressure.toFixed(2) + " Bar";
+            }
+        }
+        Text {
+            id: airt
+            anchors {
+                right: pt.left
+                //bottom: bottomPanel1.bottom
+                //top: bottomPanel1.top
+                rightMargin: 10
+                verticalCenter: bottomPanel1.verticalCenter
+                //horizontalCenter: bottomPanel1.horizontalCenter
+            }
+            color: "white"
+            text: {
+                return "air speed: " + mavlinkHandler.findMainPlane().airspeed.toFixed(2) + " m/s";
+            }
+        }
 
         Rectangle {
             id: bottomPanelBig
@@ -374,25 +510,27 @@ Window {
             }
 
             CircularGauge {
-                id: someGaugeidk
+                id: mainPlaneSpeedGauge
                 minimumValue: 0
                 maximumValue: 20
 
                 Timer {
                     interval: 500; running: true; repeat: true;
                     onTriggered: {
-                        var plane = planeController.findSelected();
+                        //var plane = planeController.findSelected();
+                        var plane = mavlinkHandler.findMainPlane();
                         //console.log(plane.airspeed);
                         try {
-                            someGaugeidk.value = plane.airspeed;
+                            mainPlaneSpeedGauge.value = plane.airspeed;
                         }catch(error){
-                            someGaugeidk.value = 0;
+                            mainPlaneSpeedGauge.value = 0;
                         }
                     }
                 }
                 //value: getSpeed();
                 width: bottomPanelBig.width * 0.33
                 anchors {
+                    topMargin: 5
                     bottom: bottomPanelBig.bottom
                     top: bottomPanelBig.top
                     left: bottomPanelBig.left
@@ -410,7 +548,161 @@ Window {
                         color: "white"//Qt.rgba(0.66, 0.3, 0, 1)
                     }
                 }
+
+                Text {
+                    text: mainPlaneSpeedGauge.value.toFixed(1) // Show the value of the gauge, adjust precision as needed
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    property real a : mainPlaneSpeedGauge.height / 4;
+                    //anchors.centerIn: mainPlaneYawGauge
+                    anchors {
+                        horizontalCenter: mainPlaneSpeedGauge.horizontalCenter
+                        top: mainPlaneSpeedGauge.top
+                        topMargin: a
+                    }
+                }
             }
+
+            CircularGauge {
+                id: mainPlaneBarGauge
+                minimumValue: 800
+                maximumValue: 1500
+                Timer {
+                    interval: 500; running: true; repeat: true;
+                    onTriggered: {
+                        //var plane = planeController.findSelected();
+                        var plane = mavlinkHandler.findMainPlane();
+                        //console.log(plane.airspeed);
+                        try {
+                            mainPlaneBarGauge.value = plane.pressure;
+                        }catch(error){
+                            mainPlaneBarGauge.value = 0;
+                        }
+                    }
+                }
+                //value: getSpeed();
+                width: bottomPanelBig.width * 0.33
+                anchors {
+                    topMargin: 5
+                    bottom: bottomPanelBig.bottom
+                    top: bottomPanelBig.top
+                    left: mainPlaneSpeedGauge.right
+                }
+
+
+
+                style: CircularGaugeStyle {
+                    labelStepSize: 100
+                    needle: Rectangle {
+                        y: outerRadius * 0.15
+                        implicitWidth: outerRadius * 0.03
+                        implicitHeight: outerRadius * 0.9
+                        antialiasing: true
+                        color: "white"//Qt.rgba(0.66, 0.3, 0, 1)
+                    }
+                }
+                Text {
+                    text: mainPlaneBarGauge.value.toFixed(2) // Show the value of the gauge, adjust precision as needed
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    property real a : mainPlaneBarGauge.height / 4;
+                    //anchors.centerIn: mainPlaneYawGauge
+                    anchors {
+                        horizontalCenter: mainPlaneBarGauge.horizontalCenter
+                        top: mainPlaneBarGauge.top
+                        topMargin: a
+                    }
+                }
+            }
+            CircularGauge {
+                id: mainPlaneYawGauge
+                minimumValue: 0
+                maximumValue: 360
+                Timer {
+                    interval: 500; running: true; repeat: true;
+                    onTriggered: {
+                        //var plane = planeController.findSelected();
+                        var plane = mavlinkHandler.findMainPlane();
+                        //console.log(plane.airspeed);
+                        try {
+                            mainPlaneYawGauge.value = plane.yaw;
+                        }catch(error){
+                            mainPlaneYawGauge.value = 0;
+                        }
+                    }
+                }
+                //value: getSpeed();
+                //width: bottomPanelBig.width * 0.33
+                anchors {
+                    topMargin: 5
+                    bottom: bottomPanelBig.bottom
+                    top: bottomPanelBig.top
+                    left: mainPlaneBarGauge.right
+                    right: bottomPanelBig.right
+                }
+                style: CircularGaugeStyle {
+                    labelStepSize: 10
+                    //minimumValueAngle: -180
+                    //maximumValueAngle: 180
+                    needle: Rectangle {
+                        y: outerRadius * 0.15
+                        implicitWidth: outerRadius * 0.03
+                        implicitHeight: outerRadius * 0.9
+                        antialiasing: true
+                        color: "white"//Qt.rgba(0.66, 0.3, 0, 1)
+                    }
+                }
+                Text {
+                    text: mainPlaneYawGauge.value // Show the value of the gauge, adjust precision as needed
+                    font.pixelSize: 20
+                    font.bold: true
+                    color: "white"
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    property real a : mainPlaneYawGauge.height / 4;
+                    //anchors.centerIn: mainPlaneYawGauge
+                    anchors {
+                        horizontalCenter: mainPlaneYawGauge.horizontalCenter
+                        top: mainPlaneYawGauge.top
+                        topMargin: a
+                    }
+                }
+            }
+            /*
+            Text {
+                id: mainPlaneText
+                //width: bottomPanelBig.width * 0.33
+                anchors {
+                    topMargin: 5
+                    left: mainPlaneBarGauge.right
+                    top: bottomPanelBig.top
+                    right: bottomPanelBig.right
+                    bottom: bottomPanelBig.bottom
+                    //horizontalCenter: bottomPanelBig.horizontalCenter
+                }
+                color: "white"
+                text: {
+                    var plane = mavlinkHandler.findMainPlane();
+                    var longitute = plane.longitude.toFixed(4);
+                    var latitude = plane.latitude.toFixed(4);
+                    var altitude = plane.altitude.toFixed(4);
+                    var yaw = plane.yaw;
+                    var airspeed = plane.airspeed.toFixed(4);
+                    var localText = "boylam: " + longitute + "\n"
+                            + "enlem: " + latitude + "\n"
+                            + "hiz: " +  airspeed + "\n"
+                            + "irtifa: " + altitude + "\n"
+                            + "yaw: " + yaw + "\n"
+                            + "pressure: " + plane.pressure.toFixed(2) + " Bar";
+                    return localText;
+                }
+            } */
         }
     }
 

@@ -2,7 +2,7 @@
 
 TeknofestProperties::TeknofestProperties(QObject *parent) : QObject{parent},
     m_session_id("asdas"),
-    m_simMode(true)
+    m_simMode(true),m_planeids()
 {
 
 }
@@ -57,5 +57,23 @@ void TeknofestProperties::setPlaneids(const std::vector<int> &newPlaneids)
     if (m_planeids == newPlaneids)
         return;
     m_planeids = newPlaneids;
+    emit planeidsChanged();
+}
+
+void TeknofestProperties::addPlane(int id)
+{
+    bool found = false;
+    if(!simMode()){
+        for(int i: m_planeids){
+            if (i == id){
+                found = true;
+            }
+        }
+    }
+
+    if(!found){
+        m_planeids.push_back(id);
+    }
+
     emit planeidsChanged();
 }
