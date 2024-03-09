@@ -11,6 +11,7 @@
 MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *planeController, TeknofestProperties *teknofestProperties, HttpClient *httpClient, QObject *parent)
     : QObject(parent),
     m_udpManager(mavlinkProperties),
+    m_serialManager(mavlinkProperties),
     m_mavLinkProperties(mavlinkProperties),
     m_planeController(planeController),
     m_teknofestProperties(teknofestProperties),
@@ -18,23 +19,48 @@ MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *pl
 {
     qRegisterMetaType<int32_t>("int32_t");
     // Connect signals from MavLinkProperties to corresponding slots
-    connect(m_mavLinkProperties, &MavLinkProperties::armedChanged, this, &MavLinkUDP::onArmedChangedSlot);
+    connect(m_mavLinkProperties, &MavLinkProperties::armedStatusChanged, this, &MavLinkUDP::armedChanged);
+}
 
-    // Configure heartbeat timer
-    //connect(&m_heartbeatTimer, &QTimer::timeout, this, &MavLinkUDP::onHeartbeatTimeout);
-    //m_heartbeatTimer.start(1000);
-
-
-
-     // Adjust interval as needed (in milliseconds)
-
-
-
-    //connect(m_sendHeartbeatThread, &QThread::started, this, &MavLinkUDP::sendHeartbeat);
+MavLinkUDP::~MavLinkUDP()
+{
 
 }
-MavLinkUDP::~MavLinkUDP() {
+
+int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
+{
+
+    int result = m_serialManager.initialize(serialPort, baudRate);
+    if(result < 0 ){
+        emit errorOccurred(result);
+        return result;
+    }
+    connect(&m_serialManager, &SerialManager::connected, this, &MavLinkUDP::connected);
+    //connect(&m_serialManager, &SerialManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
+    connect(&m_serialManager, &SerialManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
+    connect(&m_serialManager, &SerialManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
+    connect(&m_serialManager, &SerialManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
+    connect(&m_serialManager, &SerialManager::pressureDataReceived, this, &MavLinkUDP::pressureDataReceived);
+    connect(&m_serialManager, &SerialManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
+    connect(&m_serialManager, &SerialManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
+
+
+    m_mavLinkProperties->setConnected(true);
+    m_mavLinkProperties->setIsSerial(true);
+    m_mavLinkProperties->setSysid(m_teknofestProperties->takimid());
+
+    connect(&m_heartbeatTimer, &QTimer::timeout, this
+            , &MavLinkUDP::sendHeartbeat);
+    m_heartbeatTimer.start(1000);
+
+
+    m_planeController->AoULocalPlane(1, 0,0,0);
+
+
+    return 1;
 }
+
+
 
 int MavLinkUDP::initialize(const QString& ipString, int port) {
     int result = m_udpManager.initialize(ipString, port);
@@ -52,7 +78,7 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_udpManager, &UDPManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
     connect(&m_udpManager, &UDPManager::pressureDataReceived, this, &MavLinkUDP::pressureDataReceived);
     connect(&m_udpManager, &UDPManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
-
+    connect(&m_udpManager, &UDPManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
 
 
     // Connect signals from MavLinkProperties to MavLink
@@ -123,6 +149,9 @@ void MavLinkUDP::airspeedDataReceived(int id, float speed){
 void MavLinkUDP::pressureDataReceived(int id, float pressure){
     m_planeController->updateLocalPressure(id, pressure);
 }
+void MavLinkUDP::batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity){
+    m_planeController->updateLocalBattery(sysid, voltage, current, remainingCapacity);
+}
 
 
 void MavLinkUDP::onHeartbeatTimeout() {
@@ -137,15 +166,14 @@ void MavLinkUDP::sendHeartbeat() {
     // m_udpManager.sendData(heartbeatData);
     if(m_mavLinkProperties->connected()){
         // Kalp atışı gönderme işlemi
-
-        send_heartbeat();
-        plane* pl = m_planeController->planes()[0];
-        pl->setTeamid(m_teknofestProperties->takimid());
-        pl->setGpsSaati(QDateTime::currentDateTime());
-        //plane* plane = m_planeController->findPlane(pl->sysid());
-        //plane* plane = createDummyPlane();
-        QJsonObject data = pl->toJson();
-        m_httpClient->sendLocationData("http://replica.neostellar.net/api/telemetri_gonder", m_teknofestProperties, m_planeController, data);
+            send_heartbeat();
+            plane* pl = m_planeController->planes()[0];
+            pl->setTeamid(m_teknofestProperties->takimid());
+            pl->setGpsSaati(QDateTime::currentDateTime());
+            //plane* plane = m_planeController->findPlane(pl->sysid());
+            //plane* plane = createDummyPlane();
+            QJsonObject data = pl->toJson();
+            m_httpClient->sendLocationData("http://replica.neostellar.net/api/telemetri_gonder", m_teknofestProperties, m_planeController, data);
     }
 }
 plane* MavLinkUDP::createDummyPlane(){
@@ -177,6 +205,8 @@ plane* MavLinkUDP::createDummyPlane(){
     return plane;
 }
 
+
+
 int MavLinkUDP::send_heartbeat()
 {
     //qDebug() << "a";
@@ -194,14 +224,27 @@ int MavLinkUDP::send_heartbeat()
 
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         const int len = mavlink_msg_to_send_buffer(buffer, &message);
-        int ret = sendto(m_udpManager.socket_fd(), buffer, len, 0, m_udpManager.getSourceAddress(), m_udpManager.src_addr_len());
-        if (ret != len) {
-            //qDebug() << "[ERROR] sendto error \n";
-            return -2;
-        } else {
-            //qDebug() << "HEARTBEAT message sent! \n";
-            return 0;
+        if(m_mavLinkProperties->isSerial()){
+            qDebug() << m_serialManager.serialPort()->portName();
+            qint64 bytesWritten = m_serialManager.serialPort()->write(reinterpret_cast<const char*>(buffer), len);
+            if (bytesWritten != len) {
+                qDebug() << "[ERROR] Heartbeat failed to send.";
+                return -2;
+            } else {
+                qDebug() << "HEARTBEAT message sent!";
+                return 0;
+            }
+        }else {
+            int ret = sendto(m_udpManager.socket_fd(), buffer, len, 0, m_udpManager.getSourceAddress(), m_udpManager.src_addr_len());
+            if (ret != len) {
+                qDebug() << "[ERROR] heartbeat failed to send. \n";
+                return -2;
+            } else {
+                //qDebug() << "HEARTBEAT message sent! \n";
+                return 0;
+            }
         }
+
 
     }else{
         //qDebug() << "[INFO] Socket connection is not set yet! Use open_socket() \n";
@@ -210,17 +253,8 @@ int MavLinkUDP::send_heartbeat()
     return 0;
 }
 
-
-
-
-
-void MavLinkUDP::onArmedChangedSlot(bool armed) {
-    // Forward the armed state change signal
-    emit armedChanged(armed);
-}
-
-void MavLinkUDP::armedChanged(bool armed){
-    qDebug() << "Status: " << armed;
+void MavLinkUDP::armedChanged(bool armed, bool forced){
+    //qDebug() << "Status: " << armed;
     // MAV_CMD_COMPONENT_ARM_DISARM 400
     // 0 disarm 1 arm
     if(m_mavLinkProperties->connected()){
@@ -231,7 +265,9 @@ void MavLinkUDP::armedChanged(bool armed){
         armT.command = MAV_CMD_COMPONENT_ARM_DISARM;
         armT.confirmation = 1;
         armT.param1 = armed ? 1 : 0;
-        mavlink_msg_command_long_encode(1, 200, &arm_message, &armT);
+        armT.param2 = forced ? 21196 : 0;
+        int sysid = m_teknofestProperties->planeids()[0];
+        mavlink_msg_command_long_encode(sysid, 200, &arm_message, &armT);
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         const int len = mavlink_msg_to_send_buffer(buffer, &arm_message);
         int cu = sendto(m_udpManager.socket_fd(), buffer, len, 0, (const struct sockaddr*) m_udpManager.getSourceAddress(), m_udpManager.src_addr_len());
@@ -240,6 +276,9 @@ void MavLinkUDP::armedChanged(bool armed){
             return;
         }
         qDebug() << cu;
+        qDebug() << (forced ? "Forcefully" : "Peacefully")
+                 << (armed ? "armed" : "disarmed")
+                 << "the plane with id: " << sysid << ".";
     }
 }
 

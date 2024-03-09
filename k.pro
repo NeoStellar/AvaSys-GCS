@@ -1,5 +1,6 @@
 QT += quick
 QT += network
+QT += serialport
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -43,6 +44,7 @@ SOURCES += \
         mavlink/mavlinkudp.cpp \
         mavlink/plane.cpp \
         mavlink/planecontroller.cpp \
+        serial/serialmanager.cpp \
         utils/httpclient.cpp \
         utils/mavlinkproperties.cpp \
         utils/teknofestproperties.cpp \
@@ -562,6 +564,7 @@ HEADERS += \
     mavlink/mavlinkudp.h \
     mavlink/plane.h \
     mavlink/planecontroller.h \
+    serial/serialmanager.h \
     utils/httpclient.h \
     utils/mavlinkproperties.h \
     utils/teknofestproperties.h \

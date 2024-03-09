@@ -4,8 +4,11 @@
 MavLinkProperties::MavLinkProperties(QObject *parent)
     : QObject(parent),
     m_armed(false),
-    m_connected(false) {
+    m_connected(false),
+    m_isSerial(false)
+{
     qRegisterMetaType<int32_t>("int32_t");
+    qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
 }
 
 bool MavLinkProperties::armed() const {
@@ -13,10 +16,10 @@ bool MavLinkProperties::armed() const {
 }
 
 void MavLinkProperties::setArmed(bool armed) {
-    qDebug() << "Input: " << armed;
-    qDebug() << "Old variable: " << m_armed;
+    //qDebug() << "Input: " << armed;
+    //qDebug() << "Old variable: " << m_armed;
     m_armed = armed;
-    qDebug() << "Newer variable: " << m_armed;
+    //qDebug() << "Newer variable: " << m_armed;
     emit armedChanged(armed);
 }
 
@@ -28,10 +31,11 @@ void MavLinkProperties::setConnected(bool connected) {
     emit connectedChanged(connected);
 }
 
-void MavLinkProperties::toggleArmStatus()
+void MavLinkProperties::toggleArmStatus(bool forced)
 {
-    m_armed = !m_armed;
-    emit armedChanged(m_armed);
+    //m_armed = !m_armed;
+    //emit armedChanged(m_armed);
+    emit armedStatusChanged(!m_armed, forced);
 }
 
 
@@ -47,4 +51,30 @@ void MavLinkProperties::setSysid(int newSysid)
         return;
     m_sysid = newSysid;
     emit sysidChanged();
+}
+
+bool MavLinkProperties::isSerial() const
+{
+    return m_isSerial;
+}
+
+void MavLinkProperties::setIsSerial(bool newIsSerial)
+{
+    if (m_isSerial == newIsSerial)
+        return;
+    m_isSerial = newIsSerial;
+    emit isSerialChanged();
+}
+
+std::vector<std::string> MavLinkProperties::serialPorts() const
+{
+    return m_serialPorts;
+}
+
+void MavLinkProperties::setSerialPorts(const std::vector<std::string> &newSerialPorts)
+{
+    if (m_serialPorts == newSerialPorts)
+        return;
+    m_serialPorts = newSerialPorts;
+    emit serialPortsChanged();
 }

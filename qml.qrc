@@ -10,5 +10,10 @@
         <file>ui/assets/ui-current.png</file>
         <file>ui/assets/car3.png</file>
         <file>ui/assets/plane_selected.png</file>
+        <file>ui/BottomPanel/BottomPanel.qml</file>
+        <file>ui/PopupPanel/PopupPanel.qml</file>
+        <file>ui/TopPanel/TopPanel.qml</file>
+        <file>ui/DrawerPanel/DrawerPanel.qml</file>
+        <file>ui/VideoPanel/VideoPanel.qml</file>
     </qresource>
 </RCC>

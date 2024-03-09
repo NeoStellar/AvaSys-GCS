@@ -406,3 +406,42 @@ void plane::setIhaDikilme(double newIhaDikilme)
     m_ihaDikilme = newIhaDikilme;
     emit ihaDikilmeChanged();
 }
+
+float plane::voltage() const
+{
+    return m_voltage;
+}
+
+void plane::setVoltage(float newVoltage)
+{
+    if (qFuzzyCompare(m_voltage, newVoltage))
+        return;
+    m_voltage = newVoltage;
+    emit voltageChanged();
+}
+
+float plane::current() const
+{
+    return m_current;
+}
+
+void plane::setCurrent(float newCurrent)
+{
+    if (qFuzzyCompare(m_current, newCurrent))
+        return;
+    m_current = newCurrent;
+    emit currentChanged();
+}
+
+float plane::remainingCapacity() const
+{
+    return m_remainingCapacity;
+}
+
+void plane::setRemainingCapacity(float newRemainingCapacity)
+{
+    if (qFuzzyCompare(m_remainingCapacity, newRemainingCapacity))
+        return;
+    m_remainingCapacity = newRemainingCapacity;
+    emit remainingCapacityChanged();
+}

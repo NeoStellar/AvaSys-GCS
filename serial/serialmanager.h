@@ -1,22 +1,25 @@
-#ifndef UDPMANAGER_H
-#define UDPMANAGER_H
+#ifndef SERIALMANAGER_H
+#define SERIALMANAGER_H
 
 #include "mavlink-out/common/mavlink.h"
-#include "mavlinkproperties.h"
+#include "utils/mavlinkproperties.h"
 
 #include <QObject>
 #include <QThread>
 #include <QTimer>
 #include <netinet/in.h>
+#include <QtSerialPort/QSerialPort>
 
-
-class UDPReceiverThread : public QThread {
-
+class SerialReceiverThread : public QThread {
     Q_OBJECT
+
 public:
-    explicit UDPReceiverThread(int socket_fd, QObject *parent = nullptr);
-    ~UDPReceiverThread();
+    explicit SerialReceiverThread(QSerialPort* serialPort, QObject *parent = nullptr);
+    ~SerialReceiverThread();
     QByteArray convertImageToQByteArray(const mavlink_camera_image_captured_t& imageCaptured);
+    void setSerialPort(const QSerialPort &newSerialPort);
+
+    QSerialPort *serialPort() {return m_serialPort;}
 
 signals:
     void dataReceived(const QByteArray &data);
@@ -27,39 +30,30 @@ signals:
     void imageCapturedSignal(int width, int height, QByteArray imageData);
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
     void armDataReceived(int sysid, bool armed);
-
 protected:
     void run() override;
-
 private:
-    int m_socket_fd;
+    QSerialPort* m_serialPort;
 };
 
-
-
-class UDPManager : public QObject {
+class SerialManager : public QObject
+{
     Q_OBJECT
 public:
-    explicit UDPManager(MavLinkProperties *mavlinkProperties, QObject *parent = nullptr);
-    ~UDPManager();
-
-    int initialize(const QString& ipString, int port);
+    explicit SerialManager(MavLinkProperties *mavlinkProperties, QObject *parent = nullptr);
+    ~SerialManager();
+    int initialize(const QString& serialPort, int baudrate);
     void stop();
 
-
-    sockaddr_in src_addr() const;
-    void setSrc_addr(const sockaddr_in &newSrc_addr);
-    int socket_fd() const;
-    socklen_t src_addr_len() const;
-    bool src_addr_set() const;
-    void setSrc_addr_set(bool newSrc_addr_set);
     bool isConnected() const;
-    const sockaddr* getSourceAddress() const;
+
+    QSerialPort *serialPort() const;
+    void setSerialPort(QSerialPort *newSerialPort);
 
 signals:
     void connected();
     void disconnected();
-    void errorOccurred(int errorCode);
+    void errorOccurred(QString error);
     void dataReceived(const QByteArray& data);
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
@@ -69,22 +63,17 @@ signals:
     void imageCapturedSignal(int width, int height, QByteArray imageData);
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
     void armDataReceived(int sysid, bool armed);
+    void handleReceivedData(const QByteArray &data);
 public slots:
     void onErrorOccurred(int errorCode);
     void onDisconnect();
 
     void onReadyRead();
 private:
-    struct sockaddr_in m_addr;
-    struct sockaddr_in m_src_addr;
-    int m_socket_fd;
-    bool m_src_addr_set;
-    socklen_t m_src_addr_len;
-    UDPReceiverThread *m_receiverThread;
+    QSerialPort* m_serialPort;
     QTimer *m_timer;
     MavLinkProperties *m_mavlinkProperties;
-private slots:
-    void handleReceivedData(const QByteArray &data);
+    SerialReceiverThread *m_receiverThread;
 };
 
-#endif // UDPMANAGER_H
+#endif // SERIALMANAGER_H

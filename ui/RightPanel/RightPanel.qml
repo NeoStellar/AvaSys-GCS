@@ -162,7 +162,7 @@ Rectangle {
                                 //console.log(planeController.planes[index].isSelected)
                                 //planeController.changeSelection((getPlane().sysid === -1) ? getPlane().teamid : getPlane().sysid);
                                 planeController.changeSelection(getPlane().sysid, getPlane().teamid);
-                                popup.visible = getPlane().isSelected;
+                                popupPanel1.visible = getPlane().isSelected;
                                 //console.log(planeController.planes[index].isSelected)
                                 //printPlaneInfo();
                                 //console.log(getPlane().teamid);

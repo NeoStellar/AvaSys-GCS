@@ -362,6 +362,18 @@ void PlaneController::updateLocalPressure(int sysid, float pressure)
     }
 }
 
+void PlaneController::updateLocalBattery(int sysid, float voltage, float current, float remainingCapacity)
+{
+    for(plane* plane : m_planes){
+        if(plane->sysid() == sysid){
+            plane->setVoltage(voltage);
+            plane->setCurrent(current);
+            plane->setRemainingCapacity(remainingCapacity);
+            emit planesChanged();
+        }
+    }
+}
+
 void PlaneController::changeLocalSelection(int sysid)
 {
     qDebug() << "issued";

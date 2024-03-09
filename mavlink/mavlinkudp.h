@@ -10,6 +10,7 @@
 #include <utils/mavlinkproperties.h>
 #include <utils/teknofestproperties.h>
 #include <utils/udpmanager.h>
+#include <serial/serialmanager.h>
 
 class MavLinkUDP : public QObject {
     Q_OBJECT
@@ -17,8 +18,10 @@ public:
     explicit MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *m_planeController, TeknofestProperties* teknofestProperties, HttpClient* httpClient, QObject *parent);
 
     Q_INVOKABLE int initialize(const QString& ipString, int port);
+    Q_INVOKABLE int connectSerial(const QString& serialPort, int baudRate);
 
     UDPManager& getUDPManager() { return m_udpManager; }
+    SerialManager& serialManager() { return m_serialManager; }
     MavLinkProperties* getMavLinkProperties() { return m_mavLinkProperties; }
 
     PlaneController* getPlaneController() {return m_planeController;}
@@ -29,6 +32,10 @@ public:
     TeknofestProperties *teknofestProperties() const;
     Q_INVOKABLE plane* findMainPlane();
     plane *createDummyPlane();
+
+
+
+
 signals:
     // Inherited signals from UDPManager
 
@@ -44,8 +51,9 @@ signals:
     void yawDataRecieved(int sysid, float yaw);
     void airspeedDataReceived(int id, float speed);
     void pressureDataReceived(int id, float pressure);
-    void armedChanged(bool armed);
+    void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
     void errorOccurred(int errorCode);
+    void armedChanged(bool armed, bool forced);
     //void dataReceived(const ssize_t &data);
 
 
@@ -57,6 +65,7 @@ public slots:
     void receiveHeartbeat();
 private:
     UDPManager m_udpManager;
+    SerialManager m_serialManager;
     MavLinkProperties *m_mavLinkProperties;
     PlaneController *m_planeController;
     TeknofestProperties *m_teknofestProperties;

@@ -9,6 +9,40 @@
 #include <utils/teknofestproperties.h>
 #include <QJsonDocument>
 #include <video/videoitem.h>
+#include <QList>
+#include <QString>
+#include <QDir>
+
+
+bool isSerialPort(const QString &filename) {
+    return filename.startsWith("ttyUSB");
+}
+std::vector<std::string> get_available_ports() {
+    std::vector<std::string> ports;
+
+    // Directory where serial port files are located
+    const QString devDir = "/sys/class/tty";
+
+    QDir dir(devDir);
+
+    // Get the list of files in the directory
+    QStringList fileList = dir.entryList();
+
+    // Iterate through all files in the directory
+    for (const QString &entry : fileList) {
+        QString filePath = dir.absoluteFilePath(entry);
+        QFileInfo fileInfo(filePath);
+        if (isSerialPort(entry)) {
+            qDebug() << fileInfo;
+            qDebug() << filePath;
+            ports.push_back(filePath.toStdString());
+        }
+    }
+
+    return ports;
+}
+
+
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -23,8 +57,10 @@ int main(int argc, char *argv[])
     TeknofestProperties teknofestProperties;
 
 
+
     MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &app);
 
+    mavlinkProperties.setSerialPorts(get_available_ports());
 
     QQmlApplicationEngine engine;
 

@@ -61,6 +61,7 @@ void UDPReceiverThread::run() {
                     // Mavlink mesajını filtreleme
                     float vx, vy, vz, speed, pressure;
                     switch (msg.msgid) {
+
                         case MAVLINK_MSG_ID_SCALED_PRESSURE:
                             //mavlink_highres_imu_t imu_data;
                             //mavlink_msg_highres_imu_decode(&msg, &imu_data);
@@ -83,14 +84,52 @@ void UDPReceiverThread::run() {
                             qDebug() << "Received camera data";
                             emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
                             break;
-                        case MAVLINK_MSG_ID_CAMERA_INFORMATION:
+                        case MAVLINK_MSG_ID_SYS_STATUS:
+                            mavlink_sys_status_t sysStatus;
+                            mavlink_msg_sys_status_decode(&msg, &sysStatus);
+                            emit batteryDataReceived(msg.sysid, sysStatus.voltage_battery / 1000.0f, sysStatus.current_battery / 100.0f, sysStatus.battery_remaining);
                             //mavlink_camera_information_t info;
+                            break;
+                        case MAVLINK_MSG_ID_COMMAND_ACK:
+                            mavlink_command_ack_t ack;
+                            mavlink_msg_command_ack_decode(&msg, &ack);
+                            if (ack.command == MAV_CMD_COMPONENT_ARM_DISARM && ack.result == MAV_RESULT_DENIED) {
+                                // Disarming denied: not landed message received
+                                qDebug() << "Disarming denied: not landed";
+                                // Handle the message here
+                            }
                             break;
                         case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
                             mavlink_video_stream_status_t deneme;
                             mavlink_msg_video_stream_status_decode(&msg, &deneme);
                             qDebug() << "flags: " << deneme.flags;
                             break;
+                        case MAVLINK_MSG_ID_HEARTBEAT: {
+                            mavlink_heartbeat_t heartbeat;
+                            mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+
+                            // idk why and how it gives ghost heartbeat, but it is hacky fix.
+                            if(heartbeat.type == 0){
+                                break;
+                            }
+                            //qDebug() << "heartbeat start";
+                            //qDebug () << heartbeat.autopilot;
+                            //qDebug () << heartbeat.base_mode;
+                            //qDebug () << heartbeat.custom_mode;
+                            //qDebug () << heartbeat.mavlink_version;
+                            //qDebug () << heartbeat.system_status;
+                            //qDebug () << heartbeat.type;
+                            //qDebug () << "heartbeat end";
+
+                            bool armed = heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED; //MAV_MODE_FLAG_SAFETY_ARMED;
+                            //bool isArmed = heartbeat.base_mode & (MAV_MODE_FLAG_DECODE_POSITION_MANUAL| MAV_MODE_FLAG_DECODE_POSITION_STABILIZE |
+                            //                                      MAV_MODE_FLAG_DECODE_POSITION_GUIDED | MAV_MODE_FLAG_DECODE_POSITION_AUTO);
+                            // Use 'armed' variable as needed
+                            //qDebug() << "Armed status: " << (armed ? "Armed" : "Disarmed");
+                            //qDebug() << heartbeat.base_mode;
+                            emit armDataReceived(msg.sysid, armed);
+                            break;
+                        }
                         case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
                             mavlink_local_position_ned_t local_pos;
                             mavlink_msg_local_position_ned_decode(&msg, &local_pos);
@@ -265,6 +304,8 @@ int UDPManager::initialize(const QString& ipString, int port) {
     connect(m_receiverThread, &UDPReceiverThread::airspeedDataReceived, this, &UDPManager::airspeedDataReceived);
     connect(m_receiverThread, &UDPReceiverThread::pressureDataReceived, this, &UDPManager::pressureDataReceived);
     connect(m_receiverThread, &UDPReceiverThread::imageCapturedSignal, this, &UDPManager::imageCapturedSignal);
+    connect(m_receiverThread, &UDPReceiverThread::batteryDataReceived, this, &UDPManager::batteryDataReceived);
+    connect(m_receiverThread, &UDPReceiverThread::armDataReceived, this, &UDPManager::armDataReceived);
     m_receiverThread->start();
 
     m_mavlinkProperties->setSysid(1);
@@ -320,32 +361,13 @@ void UDPManager::handleReceivedData(const QByteArray &data) {
         m_mavlinkProperties->setConnected(false);
         stop();
     }else {
-        /*
-        uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-        mavlink_message_t msg;
-        mavlink_status_t status;
-
-        for (ssize_t i = 0; i < extractedValue; ++i) {
-            if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
-                //qDebug() << "abc";
-                // Mavlink mesajını filtreleme
-                switch (msg.msgid) {
-                case MAVLINK_MSG_ID_HEARTBEAT:
-                    //qDebug() << "Received SECOND HEARTBEAT message";
-                    break;
-                case MAVLINK_MSG_ID_SYS_STATUS:
-                    qDebug() << "SYS_ID: " << msg.sysid;
-                    // Handle system status message
-                    //qDebug() << "Received SYS_STATUS message";
-                    break;
-                }
-            }
-        } */
-        //qDebug() << "successful attempt";
     }
 
 }
 
+void UDPManager::armDataReceived(int sysid, bool armed){
+    m_mavlinkProperties->setArmed(armed);
+}
 void UDPManager::onErrorOccurred(int errorCode)
 {
     qDebug() << &"Error: " [ errorCode];

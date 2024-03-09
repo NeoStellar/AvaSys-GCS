@@ -33,6 +33,9 @@ class plane : public QObject
     Q_PROPERTY(int ihaOtonom READ ihaOtonom WRITE setIhaOtonom NOTIFY ihaOtonomChanged FINAL)
     Q_PROPERTY(double ihaYatis READ ihaYatis WRITE setIhaYatis NOTIFY ihaYatisChanged FINAL)
     Q_PROPERTY(double ihaYonelme READ ihaYonelme WRITE setIhaYonelme NOTIFY ihaYonelmeChanged FINAL)
+    Q_PROPERTY(float voltage READ voltage WRITE setVoltage NOTIFY voltageChanged FINAL)
+    Q_PROPERTY(float current READ current WRITE setCurrent NOTIFY currentChanged FINAL)
+    Q_PROPERTY(float remainingCapacity READ remainingCapacity WRITE setRemainingCapacity NOTIFY remainingCapacityChanged FINAL)
 public:
 
     /*
@@ -142,6 +145,15 @@ public:
     Q_INVOKABLE double ihaDikilme() const;
     void setIhaDikilme(double newIhaDikilme);
 
+    float voltage() const;
+    void setVoltage(float newVoltage);
+
+    float current() const;
+    void setCurrent(float newCurrent);
+
+    float remainingCapacity() const;
+    void setRemainingCapacity(float newRemainingCapacity);
+
 signals:
 
     void sysidChanged();
@@ -196,6 +208,12 @@ signals:
 
     void ihaDikilmeChanged();
 
+    void voltageChanged();
+
+    void currentChanged();
+
+    void remainingCapacityChanged();
+
 private:
     int m_sysid;
 
@@ -227,5 +245,8 @@ private:
     double m_ihaYatis;
     double m_ihaYonelme;
     double m_ihaDikilme;
+    float m_voltage;
+    float m_current;
+    float m_remainingCapacity;
 };
 #endif // PLANE_H

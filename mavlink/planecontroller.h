@@ -50,6 +50,8 @@ public slots:
 
     void updateLocalPressure(int sysid, float pressure);
 
+    void updateLocalBattery(int sysid, float voltage, float current, float remainingCapacity);
+
     Q_INVOKABLE void changeLocalSelection(int sysid);
     Q_INVOKABLE void changeTeknoSelection(int teamid);
 
