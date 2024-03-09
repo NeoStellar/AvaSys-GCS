@@ -15,42 +15,12 @@ Rectangle {
         left: parent.left
     }
 
-
-
-    /*Item {
-        width: 640
-        height: 480
-
-        VideoItem {
-            anchors.fill: parent
-        }
-    } */
-    /* Image {
-        id: capturedImage
-        anchors {
-            top: rightPanel.top;
-            right: rightPanel.right;
-        }
-        width: 640
-        height: 640
-
-        Connections {
-            target: mavlinkHandler
-            onImageCapturedSignal: {
-                console.log("captured");
-                var imageDataBase64 = Qt.btoa(imageData);
-                // Set the source of the Image element to the base64 encoded image data
-                capturedImage.source = "data:image/png;base64," + imageDataBase64;
-            }
-        }
-    } */
-
     Plugin{
         id: mapPlugin
         //mapboxgl osm
-        name: "mapboxgl"
+        name: "osm"
 
-
+        /*
         PluginParameter{
             name:"mapboxgl.access_token"
             value:"pk.eyJ1Ijoid2h5c2hpcm8iLCJhIjoiY2xzN2RhYjlrMjJ6MjJtcndlcDd5ZjZsdCJ9.53kyyo_B9LgZ5luCpkhayA"
@@ -58,7 +28,7 @@ Rectangle {
         PluginParameter{
             name:"mapboxgl.mapping.additional_style_urls"
             value:"https://api.maptiler.com/maps/satellite/tiles.json?key=B89VCP4PH8mLmIWPxmBH"
-        }
+        } */
 
     }
 

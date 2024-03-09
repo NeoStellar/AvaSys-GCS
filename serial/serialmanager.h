@@ -4,6 +4,7 @@
 #include "mavlink-out/common/mavlink.h"
 #include "utils/mavlinkproperties.h"
 
+#include <QMutex>
 #include <QObject>
 #include <QThread>
 #include <QTimer>
@@ -34,6 +35,7 @@ protected:
     void run() override;
 private:
     QSerialPort* m_serialPort;
+    QMutex mx;
 };
 
 class SerialManager : public QObject
@@ -50,6 +52,7 @@ public:
     QSerialPort *serialPort() const;
     void setSerialPort(QSerialPort *newSerialPort);
     void sendMAVLinkCommand(int sysid, uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
+
 signals:
     void connected();
     void disconnected();
@@ -67,13 +70,14 @@ signals:
 public slots:
     void onErrorOccurred(int errorCode);
     void onDisconnect();
-
+    void handle();
     void onReadyRead();
 private:
     QSerialPort* m_serialPort;
     QTimer *m_timer;
     MavLinkProperties *m_mavlinkProperties;
     SerialReceiverThread *m_receiverThread;
+
 };
 
 #endif // SERIALMANAGER_H
