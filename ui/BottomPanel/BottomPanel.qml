@@ -15,6 +15,27 @@ Rectangle {
     }
     height: rightPanel.height / 12
     color: "black"
+
+    Timer {
+        interval: 500; running: true; repeat: true;
+        onTriggered: {
+            //var plane = planeController.findSelected();
+            var plane = mavlinkHandler.findMainPlane();
+            //console.log(plane.airspeed);
+            try {
+                bt.text = mavlinkProperties.connected ? "Longitude: " + plane.longitude.toFixed(4) + "°" : "Longitude: ?";
+                et.text = mavlinkProperties.connected ? "Latitude: " + plane.latitude.toFixed(4) + "°" : "Latitude: ?";
+                at.text = mavlinkProperties.connected ? "Altitude: " + plane.altitude.toFixed(2) + " m" : "Altitude: ?";
+                bct.text = mavlinkProperties.connected ? "Battery Capacity: " + plane.remainingCapacity.toFixed(1) + "%" : "Battery Capacity: ?";
+                pt.text = mavlinkProperties.connected ? "Voltage: " + plane.voltage.toFixed(1) + " V" : "Voltage: ?";
+                airt.text = mavlinkProperties.connected ? "Current: " + plane.current.toFixed(1) + " A" : "Current: ?";
+            }catch(error){
+
+            }
+        }
+    }
+
+
     Text {
         id: bt
         anchors {
@@ -26,9 +47,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "boylam: " + mavlinkHandler.findMainPlane().longitude.toFixed(4) + "°";
-        }
     }
     Text {
         id: et
@@ -41,9 +59,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "enlem: " + mavlinkHandler.findMainPlane().latitude.toFixed(4) + "°";
-        }
     }
     Text {
         id: at
@@ -56,9 +71,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "altitude: " + mavlinkHandler.findMainPlane().altitude.toFixed(2) + " m";
-        }
     }
     Text {
         id: bct
@@ -71,9 +83,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "Battery Capacity: " + mavlinkHandler.findMainPlane().remainingCapacity.toFixed(1) + "%";
-        }
     }
     Text {
         id: pt
@@ -86,9 +95,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "voltage: " + mavlinkHandler.findMainPlane().voltage.toFixed(1) + " V";
-        }
     }
     Text {
         id: airt
@@ -101,9 +107,6 @@ Rectangle {
             //horizontalCenter: bottomPanel1.horizontalCenter
         }
         color: "white"
-        text: {
-            return "current: " + mavlinkHandler.findMainPlane().current.toFixed(1) + " A";
-        }
     }
 
     Rectangle {

@@ -107,14 +107,16 @@ Rectangle {
                     }
                 }
                 function getPlane(){
+                    var plane;
                     if(index >= planeController.planes.length){
-                        return planeController.planes[index - 1];
+                        plane = planeController.planes[index - 1];
                     }
                     else if(index <= 0){
-                        return planeController.planes[0];
+                        plane = planeController.planes[0];
                     }else {
-                        return planeController.planes[index];
+                        plane = planeController.planes[index];
                     }
+                    return plane;
                 }
 
                 /*
@@ -177,6 +179,8 @@ Rectangle {
                     Text {
                         text: {
                             try {
+                                //console.log("tid" + getPlane().teamid);
+                                //console.log("sid:" + getPlane().sysid);
                                 return getPlane().teamid === -1 ? getPlane().sysid : getPlane().teamid; //getPlane().teamid //getPlane().teamid === -1 ? getPlane().sysid : getPlane().teamid;
                             }catch(error){
                                 return "";

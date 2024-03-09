@@ -30,9 +30,6 @@ Window {
         id: popupPanel1
     }
 
-    TopPanel {
-        id: topBar
-    }
 
     BottomPanel {
         id: bottomPanel1
@@ -41,4 +38,8 @@ Window {
     DrawerPanel {
         id: drawer
     }
+    TopPanel {
+        id: topBar
+    }
+
 }

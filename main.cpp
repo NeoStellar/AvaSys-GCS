@@ -4,6 +4,7 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSslSocket>
+#include <iostream>
 #include <mavlink/planecontroller.h>
 #include <utils/httpclient.h>
 #include <utils/teknofestproperties.h>
@@ -34,8 +35,9 @@ std::vector<std::string> get_available_ports() {
         QFileInfo fileInfo(filePath);
         if (isSerialPort(entry)) {
             qDebug() << fileInfo;
-            qDebug() << filePath;
-            ports.push_back(filePath.toStdString());
+            std::string str = filePath.toStdString();
+            str.erase(0, 15);
+            ports.push_back(str);
         }
     }
 
@@ -57,10 +59,10 @@ int main(int argc, char *argv[])
     TeknofestProperties teknofestProperties;
 
 
+    mavlinkProperties.setSerialPorts(get_available_ports());
 
     MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &app);
 
-    mavlinkProperties.setSerialPorts(get_available_ports());
 
     QQmlApplicationEngine engine;
 
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("mavlinkHandler", &mavLink);
     engine.rootContext()->setContextProperty("mavlinkProperties", &mavlinkProperties);
     engine.rootContext()->setContextProperty("teknofestProperties", &teknofestProperties);
+    engine.rootContext()->setContextProperty("stringList", QVariant::fromValue(mavlinkProperties.ports()));
 
     QString ipString = "127.0.0.1"; // Example IP address
     int port = 14550; //teknofestProperties.simMode() ? 3131 : 14550;//3131; //3131; //14550; // Example port

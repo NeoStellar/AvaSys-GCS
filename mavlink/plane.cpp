@@ -214,6 +214,7 @@ void plane::setPressure(float newPressure)
 
 QDateTime plane::gpsSaati() const
 {
+    //qDebug() << "al eline";
     return m_gpsSaati;
 }
 

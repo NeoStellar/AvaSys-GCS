@@ -49,7 +49,6 @@ SOURCES += \
         utils/mavlinkproperties.cpp \
         utils/teknofestproperties.cpp \
         utils/udpmanager.cpp \
-        utils/utils.cpp \
         video/videoitem.cpp
 
 RESOURCES += qml.qrc

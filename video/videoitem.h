@@ -8,7 +8,6 @@ class VideoItem : public QQuickPaintedItem {
     Q_OBJECT
 public:
     VideoItem(QQuickItem *parent = nullptr);
-
     void paint(QPainter *painter) override;
     Q_INVOKABLE void start_gst();
 public slots:
@@ -19,10 +18,7 @@ private:
     int port;
     cv::Mat _frame;
     GstElement *video_pipe;
-
     static GstFlowReturn callback(GstElement *sink, gpointer data);
-
-
     void run();
 };
 

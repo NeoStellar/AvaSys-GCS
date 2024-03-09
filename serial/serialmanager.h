@@ -49,7 +49,7 @@ public:
 
     QSerialPort *serialPort() const;
     void setSerialPort(QSerialPort *newSerialPort);
-
+    void sendMAVLinkCommand(int sysid, uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
 signals:
     void connected();
     void disconnected();

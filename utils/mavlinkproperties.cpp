@@ -9,6 +9,7 @@ MavLinkProperties::MavLinkProperties(QObject *parent)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+    qRegisterMetaType<std::string>("std::string");
 }
 
 bool MavLinkProperties::armed() const {
@@ -68,7 +69,19 @@ void MavLinkProperties::setIsSerial(bool newIsSerial)
 
 std::vector<std::string> MavLinkProperties::serialPorts() const
 {
+    qDebug() << m_serialPorts[0].c_str();
     return m_serialPorts;
+}
+
+QStringList MavLinkProperties::ports() const
+{
+    QStringList stringList;
+
+    for(std::string str : m_serialPorts){
+        stringList << QString::fromStdString(str);
+    }
+
+    return stringList;
 }
 
 void MavLinkProperties::setSerialPorts(const std::vector<std::string> &newSerialPorts)

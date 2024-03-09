@@ -28,6 +28,31 @@ QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_imag
     return byteArray;
 }
 
+/*
+ *
+ *
+ * void UDPReceiverThread::sendMAVLinkCommand(uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(1, 200, &msg,
+                                  1, 1, // Target System and Component
+                                  command, 0, param1, param2, param3, param4, param5, param6, param7);
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+    // Example target address and port
+    sockaddr_in targetAddress;
+    targetAddress.sin_family = AF_INET;
+    targetAddress.sin_addr.s_addr = inet_addr("192.168.1.100"); // Replace with your target IP address
+    targetAddress.sin_port = htons(14550); // Replace with your target port
+    int cu = sendto(m_udpManager.socket_fd(), buffer, len, 0, (const struct sockaddr*) m_udpManager.getSourceAddress(), m_src);
+    // Send the buffer using sendto
+    if (sendto(m_so, buf, len, 0, reinterpret_cast<sockaddr *>(&targetAddress), sizeof(targetAddress)) != len) {
+        qDebug() << "Failed to send MAVLink command via UDP";
+    }
+}
+ * */
+
 void UDPReceiverThread::run() {
     while (!isInterruptionRequested()) {
         uint8_t buf[MAVLINK_MAX_PACKET_LEN];
@@ -237,6 +262,23 @@ UDPManager::~UDPManager() {
 const sockaddr* UDPManager::getSourceAddress() const {
     return reinterpret_cast<const sockaddr*>(&m_src_addr);
 }
+
+void UDPManager::sendMAVLinkCommand(int sysid, uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(sysid, 200, &msg,
+                                  1, 1, // Target System and Component
+                                  command, 0, param1, param2, param3, param4, param5, param6, param7);
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+    int cu = sendto(m_socket_fd, buf, len, 0, (const struct sockaddr*) getSourceAddress(), m_src_addr_len);
+    // Send the buffer using sendto
+    if (cu != len) {
+        qDebug() << "Failed to send MAVLink command via UDP";
+    }
+}
+
 int UDPManager::initialize(const QString& ipString, int port) {
     m_socket_fd = socket(PF_INET, SOCK_DGRAM, 0);
     if (m_socket_fd < 0) {
@@ -321,16 +363,12 @@ int UDPManager::initialize(const QString& ipString, int port) {
     });
     m_timer->start(1000); // Adjust the interval as needed
 
-    emit connected();
+    //emit connected();
     // Assume HeartbeatListener and startHeartbeat() methods are defined elsewhere
     // HeartbeatListener *listener = new HeartbeatListener(m_socket_fd, &m_is_connected);
     // listener->start();
     // startHeartbeat();
     return 1;
-}
-
-void UDPManager::connected(){
-    qDebug() << "UDP MANAGER signal";
 }
 void UDPManager::stop() {
     if (m_receiverThread) {
@@ -378,6 +416,11 @@ void UDPManager::onDisconnect()
     qDebug() << "Disconnected!";
 }
 
+void UDPManager::onReadyRead()
+{
+
+}
+
 bool UDPManager::src_addr_set() const
 {
     return m_src_addr_set;
@@ -386,10 +429,6 @@ bool UDPManager::src_addr_set() const
 void UDPManager::setSrc_addr_set(bool newSrc_addr_set)
 {
     m_src_addr_set = newSrc_addr_set;
-}
-
-void UDPManager::onReadyRead() {
-
 }
 
 socklen_t UDPManager::src_addr_len() const

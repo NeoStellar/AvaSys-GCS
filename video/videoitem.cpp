@@ -38,10 +38,7 @@ GstFlowReturn VideoItem::callback(GstElement *sink, gpointer data) {
     gst_buffer_unmap(buf, &map);
     gst_sample_unref(sample);
 
-    //self->update(); // Trigger repaint
-
     QMetaObject::invokeMethod(self, "updateFrame", Qt::QueuedConnection, Q_ARG(cv::Mat, self->_frame));
-    //emit self->update();
     return GST_FLOW_OK;
 }
 
@@ -62,8 +59,6 @@ void VideoItem::start_gst() {
     if (!sink) {
         g_printerr("Error: appsink not found in the pipeline\n");
         return;
-    }else {
-        qDebug() << "göasd";
     }
     gst_app_sink_set_emit_signals(GST_APP_SINK(sink), true);
     gst_app_sink_set_drop(GST_APP_SINK(sink), true);

@@ -270,6 +270,7 @@ int SerialManager::initialize(const QString &serialPort, int baudrate)
 
     m_mavlinkProperties->setSysid(1);
 
+
     m_timer = new QTimer(this);
     connect(m_timer, &QTimer::timeout, this, [this]() {
         if (!m_receiverThread->isRunning()) {
@@ -317,6 +318,20 @@ QSerialPort *SerialManager::serialPort() const
 void SerialManager::setSerialPort(QSerialPort *newSerialPort)
 {
     m_serialPort = newSerialPort;
+}
+
+void SerialManager::sendMAVLinkCommand(int sysid, uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+{
+    mavlink_message_t msg;
+    mavlink_msg_command_long_pack(sysid, 200, &msg,
+                                  1, 1, // Target System and Component
+                                  command, 1, param1, param2, param3, param4, param5, param6, param7);
+    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
+    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
+    // Write the buffer to the serial port
+    m_serialPort->write(reinterpret_cast<char *>(buf), len);
+    m_serialPort->flush();
 }
 
 

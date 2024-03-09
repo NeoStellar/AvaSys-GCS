@@ -31,7 +31,7 @@ void PlaneController::changeSelection(int teamid){
                 m_selectedid = teamid;
             }
         }
-        /*if (plane->sysid() != selectedid){
+        if (plane->sysid() != selectedid){
             plane->setIsSelected(false);
             setSelectedid(-5);
         }else {
@@ -75,7 +75,7 @@ void PlaneController::setPlanes(const std::vector<plane *> &newPlanes)
     if (m_planes == newPlanes)
         return;
     m_planes = newPlanes;
-    qDebug() << "planes size: " << m_planes.size();
+    //qDebug() << "planes size: " << m_planes.size();
     emit planesChanged();
 }
 
@@ -148,18 +148,9 @@ void PlaneController::addOrUpdatePlane(int teamid, double latitude, double longi
         qDebug() << "Adding plane: " << teamid << " to m_planes";
         addPlane(teamid, latitude, longitude, altitude);
     }
-
-
-    for (plane *plane : m_planes) {
-        if (plane->getUniqueIdentifier() == teamid) {
-            //qDebug() << "latitude: " << plane->latitude();
-            //qDebug() << "longitude: " << plane->longitude();
-            //qDebug() << "altitude: " << plane->altitude();
-            //qDebug() << "Got coordinate data from " << plane->sysid();
-            return;
-        }
-    }
 }
+
+
 
 void PlaneController::AoULocalPlane(int sysid, double latitude, double longitude, int altitude)
 {
@@ -168,8 +159,10 @@ void PlaneController::AoULocalPlane(int sysid, double latitude, double longitude
     bool found = false;
     for (plane *p : m_planes) {
         if(p->teamid() != -1){
-            found = true;
-            updateTeknoPlane(p->teamid(), latitude, longitude, altitude);
+            if(p->teamid() == sysid){
+                found = true;
+                updateTeknoPlane(p->teamid(), latitude, longitude, altitude);
+            }
             break;
         }
         if (p->sysid() == sysid) {
@@ -269,6 +262,7 @@ void PlaneController::addLocalPlane(int sysid, double latitude, double longitude
     plane* plane = new class plane();
     plane->setSysid(sysid);
     plane->setTeamid(-1);
+    qDebug() << "timid: " << plane->teamid();
     plane->setLatitude(latitude);
     plane->setLongitude(longitude);
     plane->setAltitude(altitude);
@@ -346,7 +340,7 @@ void PlaneController::updateLocalSpeed(int sysid, float speed)
         if(plane->sysid() == sysid){
             //qDebug() << "found plane";
             plane->setAirspeed(speed);
-            emit planesChanged();
+            //emit planesChanged();
             return;
         }
     }
@@ -409,7 +403,7 @@ void PlaneController::changeTeknoSelection(int teamid)
             changeLocalSelection(plane->sysid());
             return;
         }
-        if(plane->teamid() == teamid){
+        else if(plane->teamid() == teamid){
             if(plane->teamid() == m_selectedid){
                 plane->setIsSelected(false);
                 m_selectedid = -9;

@@ -29,6 +29,7 @@ public:
     void setIsSerial(bool newIsSerial);
 
     Q_INVOKABLE std::vector<std::string> serialPorts() const;
+    Q_INVOKABLE QStringList ports() const;
     void setSerialPorts(const std::vector<std::string> &newSerialPorts);
 
 signals:

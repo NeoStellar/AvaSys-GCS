@@ -35,8 +35,6 @@ int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
         emit errorOccurred(result);
         return result;
     }
-    connect(&m_serialManager, &SerialManager::connected, this, &MavLinkUDP::connected);
-    //connect(&m_serialManager, &SerialManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
     connect(&m_serialManager, &SerialManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
     connect(&m_serialManager, &SerialManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
     connect(&m_serialManager, &SerialManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
@@ -71,8 +69,8 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     }
 
     // Connect signals from UDPManager to MavLink
-    connect(&m_udpManager, &UDPManager::connected, this, &MavLinkUDP::connected);
-    connect(&m_udpManager, &UDPManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
+    //connect(&m_udpManager, &UDPManager::connected, this, &MavLinkUDP::connected);
+    //connect(&m_udpManager, &UDPManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
     connect(&m_udpManager, &UDPManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
     connect(&m_udpManager, &UDPManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
     connect(&m_udpManager, &UDPManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
@@ -94,23 +92,9 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_heartbeatTimer, &QTimer::timeout, this
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
-
-
-    //m_planeController->addOrUpdatePlane(1, 37.52, -122.276, 10);
-    //m_planeController->addOrUpdatePlane(3, 37.52, -122.276, 10);
-    //qDebug() << m_planeController->planes();
-    //qDebug() << m_planeController->planes().at(0)->latitude();
-    //qDebug() << "Added plane!sa sa";
     return 1;
 }
-/*void MavLinkUDP::handleReceivedData(const ssize_t &data) {
 
-} */
-
-void MavLinkUDP::connected(){
-    //m_planeController->addPlane(1, 37.52, -122.276, 10);
-    qDebug() << "A!";
-}
 template <typename T>
 bool contains(
     const std::vector<T>& vecObj,
@@ -137,7 +121,6 @@ void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude
     m_planeController->AoULocalPlane(sysid, latitude, longitude, altitude);
 
     m_teknofestProperties->addPlane(sysid);
-    //qDebug() << "locdata: " << m_planeController->findPlane(sysid)->teamid();
 }
 
 void MavLinkUDP::yawDataRecieved(int sysid, float yaw){
@@ -153,7 +136,6 @@ void MavLinkUDP::batteryDataReceived(int sysid, float voltage, float current, fl
     m_planeController->updateLocalBattery(sysid, voltage, current, remainingCapacity);
 }
 
-
 void MavLinkUDP::onHeartbeatTimeout() {
     sendHeartbeat();
 }
@@ -167,13 +149,16 @@ void MavLinkUDP::sendHeartbeat() {
     if(m_mavLinkProperties->connected()){
         // Kalp atışı gönderme işlemi
             send_heartbeat();
+        if(m_teknofestProperties->simMode()){
             plane* pl = m_planeController->planes()[0];
+            // fuck this line.
             pl->setTeamid(m_teknofestProperties->takimid());
             pl->setGpsSaati(QDateTime::currentDateTime());
             //plane* plane = m_planeController->findPlane(pl->sysid());
             //plane* plane = createDummyPlane();
             QJsonObject data = pl->toJson();
             m_httpClient->sendLocationData("http://replica.neostellar.net/api/telemetri_gonder", m_teknofestProperties, m_planeController, data);
+        }
     }
 }
 plane* MavLinkUDP::createDummyPlane(){
@@ -225,13 +210,13 @@ int MavLinkUDP::send_heartbeat()
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         const int len = mavlink_msg_to_send_buffer(buffer, &message);
         if(m_mavLinkProperties->isSerial()){
-            qDebug() << m_serialManager.serialPort()->portName();
+            //qDebug() << m_serialManager.serialPort()->portName();
             qint64 bytesWritten = m_serialManager.serialPort()->write(reinterpret_cast<const char*>(buffer), len);
             if (bytesWritten != len) {
                 qDebug() << "[ERROR] Heartbeat failed to send.";
                 return -2;
             } else {
-                qDebug() << "HEARTBEAT message sent!";
+                //qDebug() << "HEARTBEAT message sent!";
                 return 0;
             }
         }else {
@@ -258,7 +243,14 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
     // MAV_CMD_COMPONENT_ARM_DISARM 400
     // 0 disarm 1 arm
     if(m_mavLinkProperties->connected()){
-        mavlink_message_t arm_message;
+
+        int sysid = m_teknofestProperties->planeids()[0];
+        if(m_mavLinkProperties->isSerial()){
+            m_serialManager.sendMAVLinkCommand(sysid, MAV_CMD_COMPONENT_ARM_DISARM, armed ? 1 : 0, forced ? 21196 : 0, 0,0,0,0,0);
+        }else {
+            m_udpManager.sendMAVLinkCommand(sysid, MAV_CMD_COMPONENT_ARM_DISARM, armed ? 1 : 0, forced ? 21196 : 0, 0,0,0,0,0);
+        }
+        /*mavlink_message_t arm_message;
         mavlink_command_long_t armT;
         armT.target_system = 1;
         armT.target_component = 1;
@@ -266,7 +258,6 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
         armT.confirmation = 1;
         armT.param1 = armed ? 1 : 0;
         armT.param2 = forced ? 21196 : 0;
-        int sysid = m_teknofestProperties->planeids()[0];
         mavlink_msg_command_long_encode(sysid, 200, &arm_message, &armT);
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
         const int len = mavlink_msg_to_send_buffer(buffer, &arm_message);
@@ -275,7 +266,7 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
             qDebug() << "eşit değil";
             return;
         }
-        qDebug() << cu;
+        qDebug() << cu;*/
         qDebug() << (forced ? "Forcefully" : "Peacefully")
                  << (armed ? "armed" : "disarmed")
                  << "the plane with id: " << sysid << ".";
@@ -290,8 +281,13 @@ TeknofestProperties *MavLinkUDP::teknofestProperties() const
 plane *MavLinkUDP::findMainPlane()
 {
     if (!m_teknofestProperties->planeids().empty()){
-        return m_planeController->findMainPlane(m_teknofestProperties->planeids()[0]);
+        //qDebug() << "found the plane";
+        plane* plane = m_planeController->findMainPlane(m_teknofestProperties->planeids()[0]);
+        //qDebug() << plane->longitude();
+        //qDebug() << plane->gpsSaati();
+        return plane;
     }else{
+        //qDebug() << "nope";
         return nullptr;
     }
 }

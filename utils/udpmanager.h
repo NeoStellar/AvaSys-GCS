@@ -18,6 +18,7 @@ public:
     ~UDPReceiverThread();
     QByteArray convertImageToQByteArray(const mavlink_camera_image_captured_t& imageCaptured);
 
+
 signals:
     void dataReceived(const QByteArray &data);
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
@@ -55,7 +56,7 @@ public:
     void setSrc_addr_set(bool newSrc_addr_set);
     bool isConnected() const;
     const sockaddr* getSourceAddress() const;
-
+    void sendMAVLinkCommand(int sysid, uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7);
 signals:
     void connected();
     void disconnected();

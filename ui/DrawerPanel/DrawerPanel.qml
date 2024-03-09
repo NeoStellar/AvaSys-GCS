@@ -197,17 +197,11 @@ Drawer {
                 left: serialContent.left
             }
         }
-
         ComboBox {
             id: usbComboBox
             //width: 200
-            model: mavlinkProperties.serialPorts
+            model: mavlinkProperties.ports()
             visible: false
-            Component.onCompleted: {
-                for(var x in mavlinkProperties.serialPorts){
-                    console.log(x)
-                }
-            }
 
             anchors {
                 top: usbComboText.bottom
@@ -259,7 +253,7 @@ Drawer {
 
             onClicked: {
                 console.log("Connecting to Serial Com...")
-                mavlinkHandler.connectSerial("/dev/ttyUSB0", parseInt(baudRateInput.text));
+                mavlinkHandler.connectSerial("/dev/" + usbComboBox.currentText, parseInt(baudRateInput.text));
                 drawer.close()
                 // Serial Com'a bağlanma işlemleri burada gerçekleştirilebilir
             }

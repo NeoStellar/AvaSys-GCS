@@ -15,7 +15,23 @@ Rectangle{
 
     height: parent.height / 12
     color: "#A6000000"
-
+    property var stringList2: {
+        return mavlinkProperties.ports();
+    }
+    Text {
+        id: text2
+        anchors.centerIn: parent
+        color: "white"
+        text: {
+            if (mavlinkProperties.connected){
+                return "Connected to " + (teknofestProperties.simMode ? "Teknofest simulation" : "Local network") + " via " + (mavlinkProperties.isSerial ? "Serial" : "TCP") + " connection.";
+            }else {
+                return "Not connected to network at the moment."
+            }
+        }
+        font.pixelSize: 16
+        font.bold: true
+    }
     Image{
             id: lockIcon
             anchors{
@@ -36,36 +52,27 @@ Rectangle{
             anchors{
                 left: lockIcon.right
                 leftMargin: 40
-                bottom: lockIcon.bottom
-                verticalCenter: topBar.verticalCenter
+                //bottom: lockIcon.bottom
+                verticalCenter: text2.verticalCenter
                 bottomMargin: 2
             }
 
-            font.pixelSize: 12
+            font.pixelSize: 16
             font.bold: true
             color: "white"
-
-            text: "31:31"
-
-        }
-
-
-        Text{
-            id: connection
-            objectName: "connectionStatus"
-            anchors{
-                left: dateTimeDisplay.right
-                leftMargin: 40
-                bottom: lockIcon.bottom
-                verticalCenter: topBar.verticalCenter
-                bottomMargin: 2
+            Timer {
+                interval: 500; running: true; repeat: true;
+                onTriggered: {
+                    //var plane = planeController.findSelected();
+                    var plane = mavlinkHandler.findMainPlane();
+                    //console.log(plane.airspeed);
+                    try {
+                        dateTimeDisplay.text = "GPS Clock: " + plane.gpsSaati.getHours() + ":" + plane.gpsSaati.getMinutes();
+                    }catch(error){
+                        dateTimeDisplay.text = "Clock can not be shown. (Not connected)";
+                    }
+                }
             }
-
-            font.pixelSize: 12
-            font.bold: true
-            color: "white"
-
-            text: (mavlinkProperties.connected ? "Connection Status: Connected" : "Connection Status: Disconnected")
 
         }
 
