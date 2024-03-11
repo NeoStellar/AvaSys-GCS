@@ -1,6 +1,8 @@
 #include "udpmanager.h"
 #include "qdebug.h"
 #include <arpa/inet.h>
+#include <QBuffer>
+#include <QImage>
 #include <unistd.h>
 #include "mavlinkproperties.h"
 #include "mavlink-out/common/mavlink.h"
@@ -14,10 +16,39 @@ UDPReceiverThread::~UDPReceiverThread() {
     quit();
     wait();
 }
+QByteArray createBlackScreenByteArray(int width, int height) {
+    // Create a QImage of the specified size and format (RGB888)
+    QImage blackScreen(width, height, QImage::Format_RGB888);
 
+    // Fill the image with black pixels
+    blackScreen.fill(Qt::darkBlue);
+
+    // Convert the QImage to a QByteArray
+    QByteArray byteArray;
+    QBuffer buffer(&byteArray);
+    buffer.open(QIODevice::WriteOnly);
+    blackScreen.save(&buffer, "PNG"); // You can use any suitable image format here
+
+    return byteArray;
+}
 QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_image_captured_t &imageCaptured)
 {
+
+    if(imageCaptured.capture_result != 0){
+        //qDebug() << "nul nul nul";
+        return createBlackScreenByteArray(640,640);
+    }
     const uint8_t* imageData = reinterpret_cast<const uint8_t*>(imageCaptured.capture_result);
+
+    if(*imageData == 0x1){
+        qDebug() << "adsA;";
+    }
+    if(imageData == nullptr){
+        qDebug() << "adsacu";
+    }
+    if(imageData == NULL){
+        qDebug() << "nul";
+    }
 
     // Calculate the size of the image data
     int dataSize = 640 * 640 * 3; // Assuming RGB image
@@ -76,9 +107,6 @@ void UDPReceiverThread::run() {
 
         //QByteArray byteArray(reinterpret_cast<char*>(buf), recvLen);
         QByteArray byteArray(reinterpret_cast<const char*>(&recvLen), recvLen);
-
-
-        int error = 0;
         if(recvLen != -1){
             for (ssize_t i = 0; i < recvLen; ++i) {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
@@ -106,7 +134,7 @@ void UDPReceiverThread::run() {
                             mavlink_msg_camera_image_captured_decode(&msg, &imageCaptured);
                             //qDebug() << "Received HEARTBEAT message";
                             //qDebug() << "Heartbeat from " << msg.sysid;
-                            qDebug() << "Received camera data";
+                            //qDebug() << "Received camera data";
                             emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
                             break;
                         case MAVLINK_MSG_ID_SYS_STATUS:
@@ -122,6 +150,9 @@ void UDPReceiverThread::run() {
                                 // Disarming denied: not landed message received
                                 qDebug() << "Disarming denied: not landed";
                                 // Handle the message here
+                            }
+                            if(ack.command == MAV_CMD_NAV_TAKEOFF){
+                                emit flyingStateChanged(ack.result == MAV_RESULT_ACCEPTED);
                             }
                             break;
                         case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
@@ -201,6 +232,22 @@ void UDPReceiverThread::run() {
                             emit locationDataRecieved(msg.sysid, fLat, fLong, fAlt);
                             emit yawDataRecieved(msg.sysid, gps_data.hdg / 100);
 
+                            // !!
+                            // this one is for real life situations, not suitable for testing.
+                            // !!
+
+                            // Check if altitude is above a certain threshold (e.g., 2 meters)
+                            const float MIN_ALTITUDE_AGL = 2.0f;
+                            if (fAlt > MIN_ALTITUDE_AGL) {
+                                // Vehicle is above minimum altitude threshold
+                                // Check if the vertical velocity is positive (indicating ascent)
+                                //emit flyingStateChanged(gps_data.vz > 0);
+                            } else {
+                                // Altitude is below minimum threshold, vehicle is likely on the ground
+                                // Handle grounded state
+                                //emit flyingStateChanged(false);
+                            }
+
                             // Convert latitude, longitude, and altitude to appropriate units if necessary
                             // For example, divide by 1e7 to convert latitude and longitude to degrees
                             // Divide altitude by 1000 to convert millimeters to meters
@@ -215,18 +262,20 @@ void UDPReceiverThread::run() {
             }
             emit dataReceived(byteArray);
         }else{
-            qDebug() << "Connection problem! Error is: " << error;
-            error += 1;
-            if(error >= 5){
+            this->terminate();
+            QThread::wait();
+            //qDebug() << "Connection problem! Error is: " << error;
+            //error += 1;
+            /*if(error >= 5){
                 qDebug() << "Connection LOST closing socket";
-                emit dataReceived(byteArray);
+                //emit dataReceived(byteArray);
 
                 //close(socket_fd());
                 qDebug() << "Socket closed successfully";
                 return;
             }else{
                 QThread::sleep(1);
-            }
+            }*/
         }
     }
 }
@@ -271,6 +320,7 @@ void UDPManager::sendMAVLinkCommand(int sysid, uint16_t command, float param1, f
                                   command, 0, param1, param2, param3, param4, param5, param6, param7);
     uint8_t buf[MAVLINK_MAX_PACKET_LEN];
     uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
+
 
     int cu = sendto(m_socket_fd, buf, len, 0, (const struct sockaddr*) getSourceAddress(), m_src_addr_len);
     // Send the buffer using sendto
@@ -348,6 +398,7 @@ int UDPManager::initialize(const QString& ipString, int port) {
     connect(m_receiverThread, &UDPReceiverThread::imageCapturedSignal, this, &UDPManager::imageCapturedSignal);
     connect(m_receiverThread, &UDPReceiverThread::batteryDataReceived, this, &UDPManager::batteryDataReceived);
     connect(m_receiverThread, &UDPReceiverThread::armDataReceived, this, &UDPManager::armDataReceived);
+    connect(m_receiverThread, &UDPReceiverThread::flyingStateChanged, this, &UDPManager::flyingStateChanged);
     m_receiverThread->start();
 
     m_mavlinkProperties->setSysid(1);
@@ -359,6 +410,7 @@ int UDPManager::initialize(const QString& ipString, int port) {
             qDebug() << "Receiver thread is not running!";
             stop(); // Stop if receiver thread is not running
             m_mavlinkProperties->setConnected(false);
+            emit onDisconnect(m_mavlinkProperties->sysid());
         }
     });
     m_timer->start(1000); // Adjust the interval as needed
@@ -409,11 +461,6 @@ void UDPManager::armDataReceived(int sysid, bool armed){
 void UDPManager::onErrorOccurred(int errorCode)
 {
     qDebug() << &"Error: " [ errorCode];
-}
-
-void UDPManager::onDisconnect()
-{
-    qDebug() << "Disconnected!";
 }
 
 void UDPManager::onReadyRead()

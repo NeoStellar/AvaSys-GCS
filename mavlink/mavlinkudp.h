@@ -47,22 +47,29 @@ signals:
     void connected();
 
     void imageCapturedSignal(int width, int height, QByteArray imageData);
+
+
+
+    //void dataReceived(const ssize_t &data);
+
+    void errorOccurred(int errorCode);
+
+    void HttpClientChanged();
+    void receiveHeartbeat();
+    void onArmedChangedSlot(bool armed);
+
+public slots:
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
     void airspeedDataReceived(int id, float speed);
     void pressureDataReceived(int id, float pressure);
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
-    void errorOccurred(int errorCode);
     void armedChanged(bool armed, bool forced);
-    //void dataReceived(const ssize_t &data);
+    void flyStateChanged(bool isFlying);
+    void onDisconnect(int sysid);
+    void flyingStateChanged(bool isFlying);
 
 
-
-    void HttpClientChanged();
-
-public slots:
-
-    void receiveHeartbeat();
 private:
     UDPManager m_udpManager;
     SerialManager m_serialManager;
@@ -75,7 +82,7 @@ private:
 
 private slots:
     // Slot to handle armedChanged signal
-    void onArmedChangedSlot(bool armed);
+
     //void handleReceivedData(const ssize_t &data);
     void onHeartbeatTimeout();
     void sendHeartbeat();

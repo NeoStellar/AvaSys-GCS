@@ -28,6 +28,8 @@ signals:
     void imageCapturedSignal(int width, int height, QByteArray imageData);
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
     void armDataReceived(int sysid, bool armed);
+    void disconnected(int sysid);
+    void flyingStateChanged(bool isFlying);
 
 protected:
     void run() override;
@@ -69,10 +71,11 @@ signals:
     void onConnected();
     void imageCapturedSignal(int width, int height, QByteArray imageData);
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
-    void armDataReceived(int sysid, bool armed);
+    void flyingStateChanged(bool isFlying);
+    void onDisconnect(int sysid);
 public slots:
     void onErrorOccurred(int errorCode);
-    void onDisconnect();
+    void armDataReceived(int sysid, bool armed);
 
     void onReadyRead();
 private:

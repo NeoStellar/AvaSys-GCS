@@ -59,7 +59,7 @@ Drawer {
         border.width: 1 // Çerçeve kalınlığı
 
         // İçerik yüksekliği hesaplanıyor
-        height: columnLayout.height
+        //height: columnLayout.height
 
 
         Text {
@@ -152,7 +152,8 @@ Drawer {
         Button {
             property bool pressedWithShift: false
             id: takeOffButton
-            text: "Takeoff"//mavlinkProperties.armed ? "Status: Armed" : "Status: Disarmed"
+            text: mavlinkProperties.isFlying ? "RTL" : "Takeoff"//mavlinkProperties.armed ? "Status: Armed" : "Status: Disarmed"
+            enabled: mavlinkProperties.armed
             anchors {
                 top: tcpButton.bottom
                 topMargin: 10
@@ -162,7 +163,9 @@ Drawer {
             }
 
             onClicked: {
-                console.log("takeoff (" + pressedWithShift ? forced : normal + ")")
+                mavlinkHandler.flyStateChanged(!mavlinkProperties.isFlying);
+                console.log(!mavlinkProperties.isFlying);
+                //console.log("takeoff (" + pressedWithShift ? forced : normal + ")")
                 //mavlinkProperties.toggleArmStatus(pressedWithShift);
             }
 

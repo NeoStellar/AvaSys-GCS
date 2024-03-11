@@ -77,6 +77,7 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_udpManager, &UDPManager::pressureDataReceived, this, &MavLinkUDP::pressureDataReceived);
     connect(&m_udpManager, &UDPManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
     connect(&m_udpManager, &UDPManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
+    connect(&m_udpManager, &UDPManager::flyingStateChanged, this, &MavLinkUDP::flyingStateChanged);
 
 
     // Connect signals from MavLinkProperties to MavLink
@@ -271,6 +272,41 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
                  << (armed ? "armed" : "disarmed")
                  << "the plane with id: " << sysid << ".";
     }
+}
+
+void MavLinkUDP::flyStateChanged(bool isFlying)
+{
+    if(m_mavLinkProperties->connected()){
+        qDebug() << "fired";
+        int sysid = m_teknofestProperties->planeids()[0];
+        if(m_mavLinkProperties->isSerial()){
+            m_serialManager.sendMAVLinkCommand(sysid, isFlying ? MAV_CMD_NAV_TAKEOFF : MAV_CMD_NAV_RETURN_TO_LAUNCH, 0,0, 0, 30 ,0,0,0);
+        }else {
+            //m_udpManager.sendMAVLinkCommand(sysid, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, MAV_MODE_AUTO_ARMED, 0,0,0,0,0,0);
+            if(isFlying){
+                m_udpManager.sendMAVLinkCommand(sysid, MAV_CMD_DO_SET_MODE,
+                                          MAV_MODE_AUTO_ARMED, 0, 0, 0, 0, 0, 0);
+            }else {
+                m_udpManager.sendMAVLinkCommand(sysid, MAV_CMD_NAV_RETURN_TO_LAUNCH, 0 ,0, 0, 0,0,0,0);
+            }
+            flyingStateChanged(isFlying);
+            //m_udpManager.sendMAVLinkCommand(sysid, !isFlying ? MAV_CMD_NAV_TAKEOFF : MAV_CMD_NAV_RETURN_TO_LAUNCH, 15 ,0, 0, 30 ,0,0,0);
+        }
+        qDebug() << "Sent takeoff command!";
+        //qDebug() << (forced ? "Forcefully" : "Peacefully")
+        //         << (armed ? "armed" : "disarmed")
+        //         << "the plane with id: " << sysid << ".";
+    }
+}
+
+void MavLinkUDP::onDisconnect(int sysid)
+{
+
+}
+
+void MavLinkUDP::flyingStateChanged(bool isFlying)
+{
+    m_mavLinkProperties->setIsFlying(isFlying);
 }
 
 TeknofestProperties *MavLinkUDP::teknofestProperties() const

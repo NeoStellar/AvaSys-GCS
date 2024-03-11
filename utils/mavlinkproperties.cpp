@@ -5,7 +5,8 @@ MavLinkProperties::MavLinkProperties(QObject *parent)
     : QObject(parent),
     m_armed(false),
     m_connected(false),
-    m_isSerial(false)
+    m_isSerial(false),
+    m_isFlying(false)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
@@ -90,4 +91,17 @@ void MavLinkProperties::setSerialPorts(const std::vector<std::string> &newSerial
         return;
     m_serialPorts = newSerialPorts;
     emit serialPortsChanged();
+}
+
+bool MavLinkProperties::isFlying() const
+{
+    return m_isFlying;
+}
+
+void MavLinkProperties::setIsFlying(bool newIsFlying)
+{
+    if (m_isFlying == newIsFlying)
+        return;
+    m_isFlying = newIsFlying;
+    emit isFlyingChanged();
 }

@@ -28,9 +28,10 @@ public:
 
 
     Q_INVOKABLE plane *findMainPlane(int id);
+    void removePlane(int sysid);
 public slots:
     void addPlane(int sysid, double latitude, double longitude, int altitude);
-    void removePlane(int sysid);
+
     void updatePlane(int sysid, double latitude, double longitude, int altitude);
     void addOrUpdatePlane(int sysid, double latitude, double longitude, int altitude);
     void AoULocalPlane(int sysid, double latitude, double longitude, int altitude);
@@ -58,8 +59,12 @@ public slots:
     void setTeam(int sysid, int teamid);
     Q_INVOKABLE void changeSelection(int systemid, int teamid);
 
-signals:
+    void removeLocalPlane(int sysid);
+
     void locationChanged(int sysid, float longitude, int latitude, int32_t altitude);
+
+signals:
+
     void planesChanged();
 
     void selectedidChanged();

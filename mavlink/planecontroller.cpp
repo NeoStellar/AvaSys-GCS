@@ -111,7 +111,8 @@ plane *PlaneController::findPlane(int id)
 
 void PlaneController::removePlane(plane* plane)
 {
-   ptr->erase(std::remove(m_planes.begin(), m_planes.end(), plane), m_planes.end());
+    m_planes.erase(std::remove(m_planes.begin(), m_planes.end(), plane), m_planes.end());
+    emit planesChanged();
 }
 
 void PlaneController::updatePlane(int sysid, double latitude, double longitude, int altitude)
@@ -443,6 +444,15 @@ void PlaneController::changeSelection(int systemid, int teamid)
     }else {
         qDebug() << "local select";
         changeLocalSelection(systemid);
+    }
+}
+
+void PlaneController::removeLocalPlane(int sysid)
+{
+    for(plane* plane : m_planes){
+        if(plane->sysid() != -1 && plane->sysid() == sysid){
+            removePlane(plane);
+        }
     }
 }
 
