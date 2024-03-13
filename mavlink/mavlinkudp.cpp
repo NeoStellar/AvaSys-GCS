@@ -52,7 +52,7 @@ int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
     m_heartbeatTimer.start(1000);
 
 
-    m_planeController->AoULocalPlane(1, 0,0,0);
+    m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
 
 
     return 1;
@@ -93,6 +93,9 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_heartbeatTimer, &QTimer::timeout, this
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
+
+
+    m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
     return 1;
 }
 
@@ -119,22 +122,22 @@ void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude
     }else {
         m_planeController->setTeam(sysid, m_teknofestProperties->takimid());
     }
-    m_planeController->AoULocalPlane(sysid, latitude, longitude, altitude);
+    m_planeController->addOrUpdatePlane(sysid, latitude, longitude, altitude, m_teknofestProperties->simMode());
 
     m_teknofestProperties->addPlane(sysid);
 }
 
 void MavLinkUDP::yawDataRecieved(int sysid, float yaw){
-    m_planeController->updateLocalYaw(sysid, yaw);
+    m_planeController->updateYaw(sysid, yaw);
 }
 void MavLinkUDP::airspeedDataReceived(int id, float speed){
-    m_planeController->updateLocalSpeed(id, speed);
+    m_planeController->updateSpeed(id, speed);
 }
 void MavLinkUDP::pressureDataReceived(int id, float pressure){
-    m_planeController->updateLocalPressure(id, pressure);
+    m_planeController->updatePressure(id, pressure);
 }
 void MavLinkUDP::batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity){
-    m_planeController->updateLocalBattery(sysid, voltage, current, remainingCapacity);
+    m_planeController->updateBattery(sysid, voltage, current, remainingCapacity);
 }
 
 void MavLinkUDP::onHeartbeatTimeout() {
@@ -251,23 +254,6 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
         }else {
             m_udpManager.sendMAVLinkCommand(sysid, MAV_CMD_COMPONENT_ARM_DISARM, armed ? 1 : 0, forced ? 21196 : 0, 0,0,0,0,0);
         }
-        /*mavlink_message_t arm_message;
-        mavlink_command_long_t armT;
-        armT.target_system = 1;
-        armT.target_component = 1;
-        armT.command = MAV_CMD_COMPONENT_ARM_DISARM;
-        armT.confirmation = 1;
-        armT.param1 = armed ? 1 : 0;
-        armT.param2 = forced ? 21196 : 0;
-        mavlink_msg_command_long_encode(sysid, 200, &arm_message, &armT);
-        uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
-        const int len = mavlink_msg_to_send_buffer(buffer, &arm_message);
-        int cu = sendto(m_udpManager.socket_fd(), buffer, len, 0, (const struct sockaddr*) m_udpManager.getSourceAddress(), m_udpManager.src_addr_len());
-        if (cu != len){
-            qDebug() << "eşit değil";
-            return;
-        }
-        qDebug() << cu;*/
         qDebug() << (forced ? "Forcefully" : "Peacefully")
                  << (armed ? "armed" : "disarmed")
                  << "the plane with id: " << sysid << ".";
@@ -282,7 +268,6 @@ void MavLinkUDP::flyStateChanged(bool isFlying)
         if(m_mavLinkProperties->isSerial()){
             m_serialManager.sendMAVLinkCommand(sysid, isFlying ? MAV_CMD_NAV_TAKEOFF : MAV_CMD_NAV_RETURN_TO_LAUNCH, 0,0, 0, 30 ,0,0,0);
         }else {
-            //m_udpManager.sendMAVLinkCommand(sysid, MAV_MODE_FLAG_CUSTOM_MODE_ENABLED, MAV_MODE_AUTO_ARMED, 0,0,0,0,0,0);
             if(isFlying){
                 m_udpManager.sendMAVLinkCommand(sysid, MAV_CMD_DO_SET_MODE,
                                           MAV_MODE_AUTO_ARMED, 0, 0, 0, 0, 0, 0);

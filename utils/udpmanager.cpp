@@ -35,14 +35,11 @@ QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_imag
 {
 
     if(imageCaptured.capture_result != 0){
-        //qDebug() << "nul nul nul";
+        // trying to fix the sigsegv, not working tho
         return createBlackScreenByteArray(640,640);
     }
     const uint8_t* imageData = reinterpret_cast<const uint8_t*>(imageCaptured.capture_result);
 
-    if(*imageData == 0x1){
-        qDebug() << "adsA;";
-    }
     if(imageData == nullptr){
         qDebug() << "adsacu";
     }
@@ -50,47 +47,19 @@ QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_imag
         qDebug() << "nul";
     }
 
-    // Calculate the size of the image data
     int dataSize = 640 * 640 * 3; // Assuming RGB image
 
-    // Create a QByteArray and copy image data into it
+    // this fucker gives me segmentation fault. idk how. idk why. its fucking RANDOM WHY THE FUCK?
+    // *unsegments your fault*
     QByteArray byteArray(reinterpret_cast<const char*>(imageData), dataSize);
 
     return byteArray;
 }
 
-/*
- *
- *
- * void UDPReceiverThread::sendMAVLinkCommand(uint16_t command, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
-{
-    mavlink_message_t msg;
-    mavlink_msg_command_long_pack(1, 200, &msg,
-                                  1, 1, // Target System and Component
-                                  command, 0, param1, param2, param3, param4, param5, param6, param7);
-    uint8_t buf[MAVLINK_MAX_PACKET_LEN];
-    uint16_t len = mavlink_msg_to_send_buffer(buf, &msg);
-
-    // Example target address and port
-    sockaddr_in targetAddress;
-    targetAddress.sin_family = AF_INET;
-    targetAddress.sin_addr.s_addr = inet_addr("192.168.1.100"); // Replace with your target IP address
-    targetAddress.sin_port = htons(14550); // Replace with your target port
-    int cu = sendto(m_udpManager.socket_fd(), buffer, len, 0, (const struct sockaddr*) m_udpManager.getSourceAddress(), m_src);
-    // Send the buffer using sendto
-    if (sendto(m_so, buf, len, 0, reinterpret_cast<sockaddr *>(&targetAddress), sizeof(targetAddress)) != len) {
-        qDebug() << "Failed to send MAVLink command via UDP";
-    }
-}
- * */
-
 void UDPReceiverThread::run() {
     while (!isInterruptionRequested()) {
         uint8_t buf[MAVLINK_MAX_PACKET_LEN];
         ssize_t recvLen = recv(m_socket_fd, buf, sizeof(buf), 0);
-        //ssize_t recvLen = recvfrom(m_socket_fd, buffer, sizeof(buffer), 0,
-        //                           nullptr, nullptr); // We don't need sender info here
-        // recvLen == -1
         if (false) {
             qDebug() << "Failed to receive data from socket";
             break;
@@ -101,11 +70,6 @@ void UDPReceiverThread::run() {
         mavlink_message_t msg;
         mavlink_status_t status;
 
-        //qDebug() << "handle";
-
-
-
-        //QByteArray byteArray(reinterpret_cast<char*>(buf), recvLen);
         QByteArray byteArray(reinterpret_cast<const char*>(&recvLen), recvLen);
         if(recvLen != -1){
             for (ssize_t i = 0; i < recvLen; ++i) {
@@ -244,7 +208,6 @@ void UDPReceiverThread::run() {
                                 //emit flyingStateChanged(gps_data.vz > 0);
                             } else {
                                 // Altitude is below minimum threshold, vehicle is likely on the ground
-                                // Handle grounded state
                                 //emit flyingStateChanged(false);
                             }
 
@@ -264,6 +227,7 @@ void UDPReceiverThread::run() {
         }else{
             this->terminate();
             QThread::wait();
+            // i really do not know why error integer was not working. just remove it. what can go wrong?
             //qDebug() << "Connection problem! Error is: " << error;
             //error += 1;
             /*if(error >= 5){
@@ -286,8 +250,6 @@ ssize_t extractSSizeT(const QByteArray &byteArray, int startIndex) {
         qDebug() << "Not enough bytes in the array to represent ssize_t";
         return -1; // Or any suitable error handling
     }
-
-    // Interpret the bytes as ssize_t
     ssize_t value;
     memcpy(&value, byteArray.constData() + startIndex, sizeof(ssize_t));
     return value;

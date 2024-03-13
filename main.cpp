@@ -110,7 +110,7 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("stringList", QVariant::fromValue(mavlinkProperties.ports()));
 
     QString ipString = "127.0.0.1"; // Example IP address
-    int port = 14550; //teknofestProperties.simMode() ? 3131 : 14550;//3131; //3131; //14550; // Example port
+    int port = 14550;//14550; //teknofestProperties.simMode() ? 3131 : 14550;//3131; //3131; //14550; // Example port
     int result = mavLink.initialize(ipString, port);
     if (result < 0) {
         qDebug() << "Initialization failed. Error code:" << result;

@@ -77,7 +77,21 @@ Rectangle {
                     }
                 }
                 function getPlane(){
+
+                    // 0: unk 1: plane 2: plane
+                    // -1, 0
                     var plane;
+                    plane = planeController.planes[0];
+                    /*
+                    plane = planeController.planes[index + 1];
+                    try {
+                        console.log("yaw:" + plane.sysid);
+                    }catch(error){
+                        plane = planeController.planes[0];
+                    }
+                    return plane;
+                    */
+                    /*
                     if(index >= planeController.planes.length){
                         plane = planeController.planes[index - 1];
                     }
@@ -85,7 +99,8 @@ Rectangle {
                         plane = planeController.planes[0];
                     }else {
                         plane = planeController.planes[index];
-                    }
+                    }*/
+                    //console.log(plane.sysid);
                     return plane;
                 }
 

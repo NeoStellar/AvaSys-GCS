@@ -40,8 +40,6 @@ void MavLinkProperties::toggleArmStatus(bool forced)
     emit armedStatusChanged(!m_armed, forced);
 }
 
-
-
 int MavLinkProperties::sysid() const
 {
     return m_sysid;
@@ -68,6 +66,8 @@ void MavLinkProperties::setIsSerial(bool newIsSerial)
     emit isSerialChanged();
 }
 
+
+// TODO need to clean up these
 std::vector<std::string> MavLinkProperties::serialPorts() const
 {
     qDebug() << m_serialPorts[0].c_str();

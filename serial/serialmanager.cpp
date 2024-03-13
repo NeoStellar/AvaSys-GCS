@@ -56,139 +56,108 @@ void SerialManager::handle(){
     //ssize_t recvLen = data.size();
     mavlink_message_t msg;
     mavlink_status_t status;
-
-
-
-
     for (int i = 0; i < data.size(); ++i) {
         if (mavlink_parse_char(MAVLINK_COMM_0, data.at(i), &msg, &status)) {
             // Message parsed successfully
             float vx, vy, vz, speed, pressure;
             switch (msg.msgid) {
+                case MAVLINK_MSG_ID_SCALED_PRESSURE:
+                    mavlink_scaled_pressure_t scaled_pressure;
+                    mavlink_msg_scaled_pressure_decode(&msg, &scaled_pressure);
 
-            case MAVLINK_MSG_ID_SCALED_PRESSURE:
-                //mavlink_highres_imu_t imu_data;
-                //mavlink_msg_highres_imu_decode(&msg, &imu_data);
-                //pressure = imu_data.abs_pressure;
-                //altitude = imu_data.pressure_alt;
-                mavlink_scaled_pressure_t scaled_pressure;
-                mavlink_msg_scaled_pressure_decode(&msg, &scaled_pressure);
+                    pressure = scaled_pressure.press_abs;
+                    emit pressureDataReceived(msg.sysid, pressure);
 
-                pressure = scaled_pressure.press_abs;
-                emit pressureDataReceived(msg.sysid, pressure);
-                // Extract barometer data
-                // Print barometer values
-                //qDebug() << "Barometer - Pressure: " << pressure << " bar, Altitude: " << altitude << " m";
-                break;
-            case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
-                mavlink_camera_image_captured_t imageCaptured;
-                mavlink_msg_camera_image_captured_decode(&msg, &imageCaptured);
-                //qDebug() << "Received HEARTBEAT message";
-                //qDebug() << "Heartbeat from " << msg.sysid;
-                qDebug() << "Received camera data";
-                //emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
-                break;
-            case MAVLINK_MSG_ID_SYS_STATUS:
-                mavlink_sys_status_t sysStatus;
-                mavlink_msg_sys_status_decode(&msg, &sysStatus);
-                emit batteryDataReceived(msg.sysid, sysStatus.voltage_battery / 1000.0f, sysStatus.current_battery / 100.0f, sysStatus.battery_remaining);
-                //mavlink_camera_information_t info;
-                break;
-            case MAVLINK_MSG_ID_COMMAND_ACK:
-                mavlink_command_ack_t ack;
-                mavlink_msg_command_ack_decode(&msg, &ack);
-                if (ack.command == MAV_CMD_COMPONENT_ARM_DISARM && ack.result == MAV_RESULT_DENIED) {
-                    // Disarming denied: not landed message received
-                    qDebug() << "Disarming denied: not landed";
-                    // Handle the message here
-                }
-                break;
-            case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
-                mavlink_video_stream_status_t deneme;
-                mavlink_msg_video_stream_status_decode(&msg, &deneme);
-                qDebug() << "flags: " << deneme.flags;
-                break;
-            case MAVLINK_MSG_ID_HEARTBEAT: {
-                mavlink_heartbeat_t heartbeat;
-                mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+                    //qDebug() << "Barometer - Pressure: " << pressure << " bar, Altitude: " << altitude << " m";
+                    break;
+                case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
+                    mavlink_camera_image_captured_t imageCaptured;
+                    mavlink_msg_camera_image_captured_decode(&msg, &imageCaptured);
 
-                // idk why and how it gives ghost heartbeat, but it is hacky fix.
-                if(heartbeat.type == 0){
+                    // there is no camera feature in serial yet.
+                    //qDebug() << "Received camera data";
+                    //emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
+                    break;
+                case MAVLINK_MSG_ID_SYS_STATUS:
+                    mavlink_sys_status_t sysStatus;
+                    mavlink_msg_sys_status_decode(&msg, &sysStatus);
+                    emit batteryDataReceived(msg.sysid, sysStatus.voltage_battery / 1000.0f, sysStatus.current_battery / 100.0f, sysStatus.battery_remaining);
+                    break;
+                case MAVLINK_MSG_ID_COMMAND_ACK:
+                    mavlink_command_ack_t ack;
+                    mavlink_msg_command_ack_decode(&msg, &ack);
+                    if (ack.command == MAV_CMD_COMPONENT_ARM_DISARM && ack.result == MAV_RESULT_DENIED) {
+                        // Disarming denied: not landed message received
+                        qDebug() << "Disarming denied: not landed";
+                    }
+                    break;
+                case MAVLINK_MSG_ID_VIDEO_STREAM_STATUS:
+                    mavlink_video_stream_status_t deneme;
+                    mavlink_msg_video_stream_status_decode(&msg, &deneme);
+                    qDebug() << "flags: " << deneme.flags;
+                    break;
+                case MAVLINK_MSG_ID_HEARTBEAT: {
+                    mavlink_heartbeat_t heartbeat;
+                    mavlink_msg_heartbeat_decode(&msg, &heartbeat);
+
+                    // idk why and how it gives ghost heartbeat, but it is hacky fix.
+                    if(heartbeat.type == 0){
+                        break;
+                    }
+
+                    bool armed = heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED; //MAV_MODE_FLAG_SAFETY_ARMED;
+                    //bool isArmed = heartbeat.base_mode & (MAV_MODE_FLAG_DECODE_POSITION_MANUAL| MAV_MODE_FLAG_DECODE_POSITION_STABILIZE |
+                    //                                      MAV_MODE_FLAG_DECODE_POSITION_GUIDED | MAV_MODE_FLAG_DECODE_POSITION_AUTO);
+                    // Use 'armed' variable as needed
+                    //qDebug() << "Armed status: " << (armed ? "Armed" : "Disarmed");
+                    //qDebug() << heartbeat.base_mode;
+                    //TODO non signal
+                    emit armDataReceived(msg.sysid, armed);
                     break;
                 }
-                //qDebug() << "heartbeat start";
-                //qDebug () << heartbeat.autopilot;
-                //qDebug () << heartbeat.base_mode;
-                //qDebug () << heartbeat.custom_mode;
-                //qDebug () << heartbeat.mavlink_version;
-                //qDebug () << heartbeat.system_status;
-                //qDebug () << heartbeat.type;
-                //qDebug () << "heartbeat end";
+                case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
+                    mavlink_local_position_ned_t local_pos;
+                    mavlink_msg_local_position_ned_decode(&msg, &local_pos);
 
-                bool armed = heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED; //MAV_MODE_FLAG_SAFETY_ARMED;
-                //bool isArmed = heartbeat.base_mode & (MAV_MODE_FLAG_DECODE_POSITION_MANUAL| MAV_MODE_FLAG_DECODE_POSITION_STABILIZE |
-                //                                      MAV_MODE_FLAG_DECODE_POSITION_GUIDED | MAV_MODE_FLAG_DECODE_POSITION_AUTO);
-                // Use 'armed' variable as needed
-                //qDebug() << "Armed status: " << (armed ? "Armed" : "Disarmed");
-                //qDebug() << heartbeat.base_mode;
-                emit armDataReceived(msg.sysid, armed);
-                break;
-            }
-            case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
-                mavlink_local_position_ned_t local_pos;
-                mavlink_msg_local_position_ned_decode(&msg, &local_pos);
+                    vx = local_pos.vx;
+                    vy = local_pos.vy;
+                    vz = local_pos.vz;
 
-                // Extract speed components
-                vx = local_pos.vx; // North velocity
-                vy = local_pos.vy; // East velocity
-                vz = local_pos.vz; // Down velocity
+                    speed = sqrt(vx * vx + vy * vy + vz * vz);
+                    //qDebug() << "Received speed: " << speed << " m/s";
+                    emit airspeedDataReceived(msg.sysid, speed);
+                    break;
+                case MAVLINK_MSG_ID_ATTITUDE:
+                    mavlink_attitude_t attitude;
+                    mavlink_msg_attitude_decode(&msg, &attitude);
 
-                speed = sqrt(vx * vx + vy * vy + vz * vz);
-                // Print received speed
-                //qDebug() << "Received speed: " << speed << " m/s";
-                emit airspeedDataReceived(msg.sysid, speed);
-                break;
-            case MAVLINK_MSG_ID_ATTITUDE:
-                mavlink_attitude_t attitude;
-                mavlink_msg_attitude_decode(&msg, &attitude);
 
-                // Extract yaw (heading) from the received ATTITUDE message
-                //attitude.yaw;
-                //qDebug() << "Yaw [" << msg.sysid << "]: " << attitude.yaw;
-                //emit yawDataRecieved(msg.sysid, -1 * MAV_RAD_TO_DEG(attitude.yaw));
-                // Process yaw data as needed
-                break;
-            case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
-                //qDebug() << "Got coordinate data from " << msg.sysid;
-                mavlink_global_position_int_t gps_data;
-                mavlink_msg_global_position_int_decode(&msg, &gps_data);
+                    // // no longer needed, at least not for now
+                    //qDebug() << "Yaw [" << msg.sysid << "]: " << attitude.yaw;
+                    //emit yawDataRecieved(msg.sysid, -1 * MAV_RAD_TO_DEG(attitude.yaw));
+                    break;
+                case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
+                    mavlink_global_position_int_t gps_data;
+                    mavlink_msg_global_position_int_decode(&msg, &gps_data);
+                    int32_t latitude = gps_data.lat;  // Latitude in degrees * 1e7
+                    int32_t longitude = gps_data.lon; // Longitude in degrees * 1e7
+                    int32_t altitude = gps_data.alt;  // Altitude in millimeters
+                    float fLat = latitude / 1e7;
+                    float fLong = longitude / 1e7;
+                    int32_t fAlt = altitude / 1000;
+                    emit locationDataRecieved(msg.sysid, fLat, fLong, fAlt);
+                    emit yawDataRecieved(msg.sysid, gps_data.hdg / 100);
 
-                //if(msg.sysid == 1){
-                //    break;
-                //}
+                    // Convert latitude, longitude, and altitude to appropriate units if necessary
+                    // For example, divide by 1e7 to convert latitude and longitude to degrees
+                    // Divide altitude by 1000 to convert millimeters to meters
 
-                //qDebug() << "SYS ID : " << msg.sysid;
+                    //qDebug() << "Latitude: " << fLat;
+                    //qDebug() << "Longitude: " << fLong;
+                    //qDebug() << "Altitude: " << fAlt;
+                    break;
 
-                int32_t latitude = gps_data.lat;  // Latitude in degrees * 1e7
-                int32_t longitude = gps_data.lon; // Longitude in degrees * 1e7
-                int32_t altitude = gps_data.alt;  // Altitude in millimeters
-                //qDebug() << "hdg:" << gps_data.hdg / 100;
-                float fLat = latitude / 1e7;
-                float fLong = longitude / 1e7;
-                int32_t fAlt = altitude / 1000;
-                emit locationDataRecieved(msg.sysid, fLat, fLong, fAlt);
-                emit yawDataRecieved(msg.sysid, gps_data.hdg / 100);
-
-                // Convert latitude, longitude, and altitude to appropriate units if necessary
-                // For example, divide by 1e7 to convert latitude and longitude to degrees
-                // Divide altitude by 1000 to convert millimeters to meters
-
-                //qDebug() << "Latitude: " << fLat;
-                //qDebug() << "Longitude: " << fLong;
-                //qDebug() << "Altitude: " << fAlt;
-                break;
-
-            }
+                }
         }
     }
 }
@@ -202,9 +171,7 @@ int SerialManager::initialize(const QString &serialPort, int baudrate)
     m_serialPort->setParity(QSerialPort::NoParity);
     m_serialPort->setStopBits(QSerialPort::OneStop);
     m_serialPort->setFlowControl(QSerialPort::NoFlowControl);
-    m_serialPort->setReadBufferSize(280);
-    //QObject::connect(this, SIGNAL(readyRead()), this, SLOT(handle()));
-
+    m_serialPort->setReadBufferSize(280); // MAVLINK_MAX_PACKET_LEN
     connect(m_serialPort, &QSerialPort::readyRead, this, &SerialManager::handle);
 
     if (!m_serialPort->open(QIODevice::ReadWrite)) {
