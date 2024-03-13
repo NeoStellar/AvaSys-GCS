@@ -5,6 +5,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
+import QtQuick.Shapes 1.14
 Rectangle {
     id: rightPanel
     anchors{
@@ -86,6 +87,19 @@ Rectangle {
                             }
                         }
                         //NumberAnimation on rotation { from: 0; to: 360; duration: 2000; loops: Animation.Infinite; }
+                    }
+
+                    Rectangle {
+                        width: 2
+                        height: 100
+                        color: "black"
+                        x: image.x + image.width / 2
+                        y: image.y - 32 + image.height
+                        transform: Rotation {
+                            origin.x: width / 2
+                            origin.y: height
+                            angle: 180
+                        }
                     }
 
                     width: plane2.width * 0.5

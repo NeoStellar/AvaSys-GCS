@@ -36,6 +36,7 @@ public:
 
 
 
+    void initTeknofest();
 signals:
     // Inherited signals from UDPManager
 

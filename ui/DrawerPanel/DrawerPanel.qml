@@ -203,7 +203,7 @@ Drawer {
         ComboBox {
             id: usbComboBox
             //width: 200
-            model: mavlinkProperties.ports()
+            model: mavlinkProperties.ports
             visible: false
 
             anchors {

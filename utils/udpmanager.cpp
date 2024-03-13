@@ -16,21 +16,18 @@ UDPReceiverThread::~UDPReceiverThread() {
     quit();
     wait();
 }
+
 QByteArray createBlackScreenByteArray(int width, int height) {
-    // Create a QImage of the specified size and format (RGB888)
     QImage blackScreen(width, height, QImage::Format_RGB888);
-
-    // Fill the image with black pixels
     blackScreen.fill(Qt::darkBlue);
-
-    // Convert the QImage to a QByteArray
     QByteArray byteArray;
     QBuffer buffer(&byteArray);
     buffer.open(QIODevice::WriteOnly);
-    blackScreen.save(&buffer, "PNG"); // You can use any suitable image format here
+    blackScreen.save(&buffer, "PNG");
 
     return byteArray;
 }
+
 QByteArray UDPReceiverThread::convertImageToQByteArray(const mavlink_camera_image_captured_t &imageCaptured)
 {
 
@@ -74,38 +71,26 @@ void UDPReceiverThread::run() {
         if(recvLen != -1){
             for (ssize_t i = 0; i < recvLen; ++i) {
                 if (mavlink_parse_char(MAVLINK_COMM_0, buf[i], &msg, &status)) {
-                    //qDebug() << "abc";
-                    // Mavlink mesajını filtreleme
                     float vx, vy, vz, speed, pressure;
                     switch (msg.msgid) {
-
                         case MAVLINK_MSG_ID_SCALED_PRESSURE:
-                            //mavlink_highres_imu_t imu_data;
-                            //mavlink_msg_highres_imu_decode(&msg, &imu_data);
-                            //pressure = imu_data.abs_pressure;
-                            //altitude = imu_data.pressure_alt;
                             mavlink_scaled_pressure_t scaled_pressure;
                             mavlink_msg_scaled_pressure_decode(&msg, &scaled_pressure);
 
                             pressure = scaled_pressure.press_abs;
                             emit pressureDataReceived(msg.sysid, pressure);
                             // Extract barometer data
-                            // Print barometer values
                             //qDebug() << "Barometer - Pressure: " << pressure << " bar, Altitude: " << altitude << " m";
                             break;
                         case MAVLINK_MSG_ID_CAMERA_IMAGE_CAPTURED:
                             mavlink_camera_image_captured_t imageCaptured;
                             mavlink_msg_camera_image_captured_decode(&msg, &imageCaptured);
-                            //qDebug() << "Received HEARTBEAT message";
-                            //qDebug() << "Heartbeat from " << msg.sysid;
-                            //qDebug() << "Received camera data";
                             emit imageCapturedSignal(640, 640, convertImageToQByteArray(imageCaptured));
                             break;
                         case MAVLINK_MSG_ID_SYS_STATUS:
                             mavlink_sys_status_t sysStatus;
                             mavlink_msg_sys_status_decode(&msg, &sysStatus);
                             emit batteryDataReceived(msg.sysid, sysStatus.voltage_battery / 1000.0f, sysStatus.current_battery / 100.0f, sysStatus.battery_remaining);
-                            //mavlink_camera_information_t info;
                             break;
                         case MAVLINK_MSG_ID_COMMAND_ACK:
                             mavlink_command_ack_t ack;
@@ -132,19 +117,10 @@ void UDPReceiverThread::run() {
                             if(heartbeat.type == 0){
                                 break;
                             }
-                            //qDebug() << "heartbeat start";
-                            //qDebug () << heartbeat.autopilot;
-                            //qDebug () << heartbeat.base_mode;
-                            //qDebug () << heartbeat.custom_mode;
-                            //qDebug () << heartbeat.mavlink_version;
-                            //qDebug () << heartbeat.system_status;
-                            //qDebug () << heartbeat.type;
-                            //qDebug () << "heartbeat end";
 
                             bool armed = heartbeat.base_mode & MAV_MODE_FLAG_SAFETY_ARMED; //MAV_MODE_FLAG_SAFETY_ARMED;
                             //bool isArmed = heartbeat.base_mode & (MAV_MODE_FLAG_DECODE_POSITION_MANUAL| MAV_MODE_FLAG_DECODE_POSITION_STABILIZE |
                             //                                      MAV_MODE_FLAG_DECODE_POSITION_GUIDED | MAV_MODE_FLAG_DECODE_POSITION_AUTO);
-                            // Use 'armed' variable as needed
                             //qDebug() << "Armed status: " << (armed ? "Armed" : "Disarmed");
                             //qDebug() << heartbeat.base_mode;
                             emit armDataReceived(msg.sysid, armed);
@@ -153,14 +129,11 @@ void UDPReceiverThread::run() {
                         case MAVLINK_MSG_ID_LOCAL_POSITION_NED:
                             mavlink_local_position_ned_t local_pos;
                             mavlink_msg_local_position_ned_decode(&msg, &local_pos);
-
-                            // Extract speed components
-                            vx = local_pos.vx; // North velocity
-                            vy = local_pos.vy; // East velocity
-                            vz = local_pos.vz; // Down velocity
+                            vx = local_pos.vx;
+                            vy = local_pos.vy;
+                            vz = local_pos.vz;
 
                             speed = sqrt(vx * vx + vy * vy + vz * vz);
-                            // Print received speed
                             //qDebug() << "Received speed: " << speed << " m/s";
                             emit airspeedDataReceived(msg.sysid, speed);
                             break;
@@ -168,36 +141,27 @@ void UDPReceiverThread::run() {
                             mavlink_attitude_t attitude;
                             mavlink_msg_attitude_decode(&msg, &attitude);
 
-
-                            // Extract yaw (heading) from the received ATTITUDE message
-                            //attitude.yaw;
                             //qDebug() << "Yaw [" << msg.sysid << "]: " << attitude.yaw;
                             //emit yawDataRecieved(msg.sysid, attitude.yaw);
-                            // Process yaw data as needed
                             break;
                         case MAVLINK_MSG_ID_GLOBAL_POSITION_INT:
                             //qDebug() << "Got coordinate data from " << msg.sysid;
                             mavlink_global_position_int_t gps_data;
                             mavlink_msg_global_position_int_decode(&msg, &gps_data);
 
-                            //if(msg.sysid == 1){
-                            //    break;
-                            //}
-
-                            //qDebug() << "SYS ID : " << msg.sysid;
-
                             int32_t latitude = gps_data.lat;  // Latitude in degrees * 1e7
                             int32_t longitude = gps_data.lon; // Longitude in degrees * 1e7
                             int32_t altitude = gps_data.alt;  // Altitude in millimeters
-                            //qDebug() << "hdg:" << gps_data.hdg / 100;
+
                             float fLat = latitude / 1e7;
                             float fLong = longitude / 1e7;
                             int32_t fAlt = altitude / 1000;
+
                             emit locationDataRecieved(msg.sysid, fLat, fLong, fAlt);
                             emit yawDataRecieved(msg.sysid, gps_data.hdg / 100);
 
                             // !!
-                            // this one is for real life situations, not suitable for testing.
+                            // this one is for real life situations, not suitable for simulations.
                             // !!
 
                             // Check if altitude is above a certain threshold (e.g., 2 meters)
@@ -210,14 +174,6 @@ void UDPReceiverThread::run() {
                                 // Altitude is below minimum threshold, vehicle is likely on the ground
                                 //emit flyingStateChanged(false);
                             }
-
-                            // Convert latitude, longitude, and altitude to appropriate units if necessary
-                            // For example, divide by 1e7 to convert latitude and longitude to degrees
-                            // Divide altitude by 1000 to convert millimeters to meters
-
-                            //qDebug() << "Latitude: " << fLat;
-                            //qDebug() << "Longitude: " << fLong;
-                            //qDebug() << "Altitude: " << fAlt;
                             break;
 
                     }

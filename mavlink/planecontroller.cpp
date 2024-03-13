@@ -9,7 +9,7 @@ PlaneController::PlaneController(QObject *parent)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<plane*>>("std::vector<plane*>");
-    m_updateTimer.setInterval(500);
+    m_updateTimer.setInterval(200);
     connect(&m_updateTimer, &QTimer::timeout, this, &PlaneController::throttledUpdate);
     m_updateTimer.start();
 }
@@ -18,7 +18,6 @@ void PlaneController::setQmlContext(QQmlContext *context)
     context->setContextProperty("planeController",  this);
     context->setContextProperty("planeList", QVariant::fromValue(m_planes));
 }
-
 
 void PlaneController::addPlane(int teamid, double latitude, double longitude, int altitude)
 {
@@ -29,8 +28,6 @@ void PlaneController::addPlane(int teamid, double latitude, double longitude, in
     plan->setAltitude(altitude);
     if (plan != nullptr) {
         m_planes.push_back(plan);
-        //qDebug() << "plane list changed";
-        //emit planesChanged();
     } else {
         qDebug() << "Error: Attempting to append a null plane object to m_planes.";
     }
@@ -46,7 +43,6 @@ void PlaneController::setPlanes(const std::vector<plane *> &newPlanes)
     if (m_planes == newPlanes)
         return;
     m_planes = newPlanes;
-    //qDebug() << "planes size: " << m_planes.size();
     emit planesChanged();
 }
 
@@ -78,7 +74,6 @@ plane *PlaneController::findPlane(int id)
 void PlaneController::removePlane(plane* plane)
 {
     m_planes.erase(std::remove(m_planes.begin(), m_planes.end(), plane), m_planes.end());
-    //emit planesChanged();
 }
 
 void PlaneController::updatePlane(int id, double latitude, double longitude, int altitude)
@@ -87,13 +82,12 @@ void PlaneController::updatePlane(int id, double latitude, double longitude, int
     if(check.isValid){
         check.plane2->setGpsSaati(QDateTime::currentDateTime());
         check.plane2->updateLocation(latitude, longitude, altitude);
+        //emit planesChanged();
     }
-    //emit planesChanged();
 }
 
 void PlaneController::updatePlane(plane* &plane, double latitude, double longitude, int altitude){
     plane->updateLocation(latitude, longitude, altitude);
-    //emit planesChanged();
 }
 
 PlaneController::planestatus PlaneController::quickCheck(int id)
@@ -135,7 +129,6 @@ void PlaneController::addOrUpdatePlane(int id, double latitude, double longitude
         }else {
             plane->setTeamid(id);
         }
-        //qDebug() << "timid: " << plane->teamid();
         plane->setLatitude(latitude);
         plane->setLongitude(longitude);
         plane->setAltitude(altitude);
@@ -146,6 +139,7 @@ void PlaneController::addOrUpdatePlane(int id, double latitude, double longitude
             qDebug() << "Error: Attempting to append a null plane object to m_planes.";
         }
     }
+    //qDebug() << "changed";
     //emit planesChanged();
 }
 
@@ -155,7 +149,6 @@ void PlaneController::updateYaw(int id, float yaw)
         if(plane->teamid() != -1){
             if(plane->teamid() == id){
                 plane->setYaw(yaw);
-                // emit planesChanged();
             }
         }else if(plane->sysid() != -1){
             if(plane->sysid() == id){
@@ -163,6 +156,7 @@ void PlaneController::updateYaw(int id, float yaw)
             }
         }
     }
+    //emit planesChanged();
 }
 
 void PlaneController::updateSpeed(int id, float speed)
@@ -195,7 +189,6 @@ void PlaneController::setTeam(int sysid, int teamid)
 {
     for (plane *plane : m_planes) {
         if (plane->sysid() == sysid) {
-            //qDebug() << "setTEam: " << teamid;
             plane->setTeamid(teamid);
             return;
         }
@@ -210,12 +203,11 @@ void PlaneController::changeSelection(int systemid)
 
         stat.plane2->setIsSelected(stat.plane2->sysid() != m_selectedid);
         setSelectedid(stat.plane2->sysid() == m_selectedid ? -3 : stat.plane2->sysid());
-        //m_selectedid = stat.plane2->sysid() == m_selectedid ? -3 : stat.plane2->sysid();
 
     }else if(stat.isValid && !stat.isLocal){
         qDebug() << "tekno select";
         stat.plane2->setIsSelected(stat.plane2->teamid() != m_selectedid);
-        m_selectedid = stat.plane2->teamid() == m_selectedid ? -9 : stat.plane2->teamid();
+        setSelectedid(stat.plane2->teamid() == m_selectedid ? -9 : stat.plane2->teamid());
     }
     qDebug() << "Selected id: " << m_selectedid;
     for (plane* plane : m_planes){

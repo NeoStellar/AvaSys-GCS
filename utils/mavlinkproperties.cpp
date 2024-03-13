@@ -18,10 +18,7 @@ bool MavLinkProperties::armed() const {
 }
 
 void MavLinkProperties::setArmed(bool armed) {
-    //qDebug() << "Input: " << armed;
-    //qDebug() << "Old variable: " << m_armed;
     m_armed = armed;
-    //qDebug() << "Newer variable: " << m_armed;
     emit armedChanged(armed);
 }
 
@@ -35,8 +32,6 @@ void MavLinkProperties::setConnected(bool connected) {
 
 void MavLinkProperties::toggleArmStatus(bool forced)
 {
-    //m_armed = !m_armed;
-    //emit armedChanged(m_armed);
     emit armedStatusChanged(!m_armed, forced);
 }
 
@@ -76,13 +71,13 @@ std::vector<std::string> MavLinkProperties::serialPorts() const
 
 QStringList MavLinkProperties::ports() const
 {
-    QStringList stringList;
+    /*QStringList stringList;
 
     for(std::string str : m_serialPorts){
         stringList << QString::fromStdString(str);
-    }
+    } */
 
-    return stringList;
+    return m_ports;
 }
 
 void MavLinkProperties::setSerialPorts(const std::vector<std::string> &newSerialPorts)
@@ -104,4 +99,10 @@ void MavLinkProperties::setIsFlying(bool newIsFlying)
         return;
     m_isFlying = newIsFlying;
     emit isFlyingChanged();
+}
+
+void MavLinkProperties::setPorts(const QStringList &newPorts)
+{
+    m_ports = newPorts;
+    emit portsChanged();
 }

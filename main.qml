@@ -30,7 +30,6 @@ Window {
         id: popupPanel1
     }
 
-
     BottomPanel {
         id: bottomPanel1
     }

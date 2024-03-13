@@ -33,7 +33,6 @@ SerialManager::~SerialManager()
 
 void SerialManager::handle(){
 
-    //qDebug() << "mmm";
     if (!m_serialPort || !m_serialPort->isOpen()) {
         qDebug() << "Serial port is not open or is null.";
         return;
@@ -43,8 +42,6 @@ void SerialManager::handle(){
         //msleep(10); // Sleep briefly to prevent busy-waiting
         qDebug() << "aaskdjak";
         return;
-    }else {
-        qDebug() << "err2";
     }
     QByteArray data = m_serialPort->readAll();
     if (data.isEmpty()) {

@@ -11,6 +11,7 @@ class MavLinkProperties : public QObject {
     Q_PROPERTY(bool isSerial READ isSerial WRITE setIsSerial NOTIFY isSerialChanged FINAL)
     Q_PROPERTY(bool isFlying READ isFlying WRITE setIsFlying NOTIFY isFlyingChanged FINAL)
     Q_PROPERTY(std::vector<std::string> serialPorts READ serialPorts WRITE setSerialPorts NOTIFY serialPortsChanged FINAL)
+    Q_PROPERTY(QStringList ports READ ports WRITE setPorts NOTIFY portsChanged FINAL)
 
 public:
     explicit MavLinkProperties(QObject *parent = nullptr);
@@ -36,6 +37,8 @@ public:
     Q_INVOKABLE bool isFlying() const;
     Q_INVOKABLE void setIsFlying(bool newIsFlying);
 
+    void setPorts(const QStringList &newPorts);
+
 signals:
     void armedChanged(bool armed);
     void armedStatusChanged(bool armed, bool forced);
@@ -50,6 +53,8 @@ signals:
 
     void isFlyingChanged();
 
+    void portsChanged();
+
 private:
     bool m_armed;
     bool m_connected;
@@ -57,6 +62,7 @@ private:
     bool m_isSerial;
     std::vector<std::string> m_serialPorts;
     bool m_isFlying;
+    QStringList m_ports;
 };
 
 #endif // MAVLINKPROPERTIES_H

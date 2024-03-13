@@ -364,7 +364,6 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
 
         qDebug() << list.size();
 
-        // this line probably upsets qml. screw qml.
         planeController->setPlanes(list);
 
         //qDebug() << "Response: " << message;

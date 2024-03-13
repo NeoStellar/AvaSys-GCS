@@ -29,8 +29,6 @@ float plane::longitude() const
 
 void plane::setLongitude(float newLongitude)
 {
-    if (qFuzzyCompare(m_longitude, newLongitude))
-        return;
     m_longitude = newLongitude;
 
     emit longitudeChanged();
@@ -43,8 +41,6 @@ float plane::latitude() const
 
 void plane::setLatitude(float newLatitude)
 {
-    if (qFuzzyCompare(m_latitude, newLatitude))
-        return;
     m_latitude = newLatitude;
 
     emit latitudeChanged();
@@ -57,38 +53,18 @@ int32_t plane::altitude() const
 
 void plane::setAltitude(int32_t newAltitude)
 {
-    if (m_altitude == newAltitude)
-        return;
     m_altitude = newAltitude;
     emit altitudeChanged();
 }
 
 void plane::updateLocation(double newLatitude, double newLongitude, int newAltitude)
 {
-    /* if (qFuzzyCompare(m_latitude, newLatitude) &&
-        qFuzzyCompare(m_longitude, newLongitude) &&
-        m_altitude == newAltitude)
-    {
-        // No change in location, return
-        return;
-    } */
-    m_latitude = newLatitude;
-    m_longitude = newLongitude;
-    m_altitude = newAltitude;
+    setLatitude(newLatitude);
+    setLongitude(newLongitude);
+    setAltitude(newAltitude);
 
-    //qDebug() << "long: " << m_longitude;
-
-    // Emit signals to notify any connected slots
-    //emit latitudeChanged();
-    //emit longitudeChanged();
-    //emit altitudeChanged();
-    //qDebug() << m_sysid << ":" << m_yaw;
-    //emit yawChanged();
-    if(m_sysid == 3){
-        //qDebug() << m_sysid << ":" << m_isSelected;
-    }
+    emit yawChanged();
     emit locationChanged(m_sysid, m_longitude, m_latitude, m_altitude);
-
 }
 
 float plane::yaw() const
@@ -123,9 +99,7 @@ void plane::setIsSelected(bool newIsSelected)
 QJsonObject plane::toJson() const{
     QJsonObject json;
 
-    // Convert location data to JSON
     QJsonObject locationJson;
-    //m_locationData.gpsSaati = QDateTime::currentDateTime();
     QJsonObject locationDataObject;
 
     if(!m_gpsSaati.isNull()){
@@ -143,20 +117,20 @@ QJsonObject plane::toJson() const{
         locationJson["gps_saati"] = locationDataObject;
     }
 
-    locationJson["hedef_genislik"] = 10; //m_locationData.hedefGenislik;
-    locationJson["hedef_merkez_X"] = 20; //m_locationData.hedefMerkezX;
-    locationJson["hedef_merkez_Y"] = 920; //m_locationData.hedefMerkezY;
-    locationJson["hedef_yukseklik"] = 31; //m_locationData.hedefYukseklik;
-    locationJson["iha_batarya"] = 99; //m_locationData.ihaBatarya;
+    locationJson["hedef_genislik"] = 10;
+    locationJson["hedef_merkez_X"] = 20;
+    locationJson["hedef_merkez_Y"] = 920;
+    locationJson["hedef_yukseklik"] = 31;
+    locationJson["iha_batarya"] = 99;
     locationJson["iha_boylam"] = m_longitude;
 
-    locationJson["iha_dikilme"] = (int) m_pressure; //m_locationData.ihaDikilme;
+    locationJson["iha_dikilme"] = (int) m_pressure;
     locationJson["iha_enlem"] = m_latitude;
-    locationJson["iha_hiz"] = (int) m_airspeed; //m_locationData.ihaHiz;
+    locationJson["iha_hiz"] = (int) m_airspeed;
     locationJson["iha_irtifa"] = (int) m_altitude;
-    locationJson["iha_kilitlenme"] = 40; //m_locationData.ihaKilitlenme;
-    locationJson["iha_otonom"] = 20; //m_locationData.ihaOtonom;
-    locationJson["iha_yatis"] = 20; //m_locationData.ihaYatis;
+    locationJson["iha_kilitlenme"] = 40;
+    locationJson["iha_otonom"] = 20;
+    locationJson["iha_yatis"] = 20;
     locationJson["iha_yonelme"] = m_yaw;
     //qDebug() << "a: " << m_teamid;
     locationJson["takim_numarasi"] = m_teamid;

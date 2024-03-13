@@ -18,7 +18,6 @@ MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *pl
     m_httpClient(httpClient)
 {
     qRegisterMetaType<int32_t>("int32_t");
-    // Connect signals from MavLinkProperties to corresponding slots
     connect(m_mavLinkProperties, &MavLinkProperties::armedStatusChanged, this, &MavLinkUDP::armedChanged);
 }
 
@@ -51,14 +50,24 @@ int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
 
+    // we need to get heartbeat to get system id first.
 
-    m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
 
-
+    initTeknofest();
     return 1;
 }
 
+void MavLinkUDP::initTeknofest(){
+    std::pair<int, QByteArray> pair = m_httpClient->sendAuthRequest("http://replica.neostellar.net/api/giris", "kullanıcı2", "sifre");
+    int takimid = pair.first;
+    QByteArray session_id = pair.second;
 
+    m_teknofestProperties->setsession(session_id);
+    m_teknofestProperties->setTakimid(takimid);
+
+    qDebug() << m_teknofestProperties->takimid();
+    qDebug() << m_teknofestProperties->session();
+}
 
 int MavLinkUDP::initialize(const QString& ipString, int port) {
     int result = m_udpManager.initialize(ipString, port);
@@ -68,9 +77,6 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
         return result;
     }
 
-    // Connect signals from UDPManager to MavLink
-    //connect(&m_udpManager, &UDPManager::connected, this, &MavLinkUDP::connected);
-    //connect(&m_udpManager, &UDPManager::errorOccurred, this, &MavLinkUDP::errorOccurred);
     connect(&m_udpManager, &UDPManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
     connect(&m_udpManager, &UDPManager::yawDataRecieved, this, &MavLinkUDP::yawDataRecieved);
     connect(&m_udpManager, &UDPManager::airspeedDataReceived, this, &MavLinkUDP::airspeedDataReceived);
@@ -79,23 +85,17 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_udpManager, &UDPManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
     connect(&m_udpManager, &UDPManager::flyingStateChanged, this, &MavLinkUDP::flyingStateChanged);
 
-
     // Connect signals from MavLinkProperties to MavLink
     connect(m_mavLinkProperties, &MavLinkProperties::connectedChanged, this, &MavLinkUDP::connectedChanged);
 
-    //connect(&m_udpManager, &UDPManager::dataReceived, this, &MavLinkUDP::handleReceivedData);
-
-
     m_mavLinkProperties->setConnected(true);
-
     m_mavLinkProperties->setSysid(m_teknofestProperties->takimid());
 
     connect(&m_heartbeatTimer, &QTimer::timeout, this
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
 
-
-    //m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
+    initTeknofest();
     return 1;
 }
 
@@ -113,17 +113,8 @@ bool contains(
     return it != vecObj.end();
 }
 void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude){
-    //qDebug() << "latitude: " << latitude;
-    //qDebug() << "longitude: " << longitude;
-    //qDebug() << "altitude: " << altitude;
-    //qDebug() << "Got coordinate data from " << sysid;
-    if(!m_teknofestProperties->simMode()){
-        m_planeController->setTeam(sysid, -1);
-    }else {
-        m_planeController->setTeam(sysid, m_teknofestProperties->takimid());
-    }
+    m_planeController->setTeam(sysid, !m_teknofestProperties->simMode() ? -1 : m_teknofestProperties->takimid());
     m_planeController->addOrUpdatePlane(sysid, latitude, longitude, altitude, m_teknofestProperties->simMode());
-
     m_teknofestProperties->addPlane(sysid);
 }
 
@@ -146,15 +137,11 @@ void MavLinkUDP::onHeartbeatTimeout() {
 
 void MavLinkUDP::sendHeartbeat() {
 
-    //qDebug() << "Sending heartbeat started";
-    // Implement sending heartbeat message using m_udpManager
-    // Example:
-    // m_udpManager.sendData(heartbeatData);
     if(m_mavLinkProperties->connected()){
         // Kalp atışı gönderme işlemi
-            send_heartbeat();
+        send_heartbeat();
         if(m_teknofestProperties->simMode()){
-            plane* pl = m_planeController->planes()[0];
+            plane* pl = findMainPlane();
             // fuck this line.
             pl->setTeamid(m_teknofestProperties->takimid());
             pl->setGpsSaati(QDateTime::currentDateTime());
@@ -263,7 +250,7 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
 void MavLinkUDP::flyStateChanged(bool isFlying)
 {
     if(m_mavLinkProperties->connected()){
-        qDebug() << "fired";
+        qDebug() << "Fly state change fired";
         int sysid = m_teknofestProperties->planeids()[0];
         if(m_mavLinkProperties->isSerial()){
             m_serialManager.sendMAVLinkCommand(sysid, isFlying ? MAV_CMD_NAV_TAKEOFF : MAV_CMD_NAV_RETURN_TO_LAUNCH, 0,0, 0, 30 ,0,0,0);
