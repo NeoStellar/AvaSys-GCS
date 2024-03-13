@@ -79,11 +79,11 @@ void plane::updateLocation(double newLatitude, double newLongitude, int newAltit
     //qDebug() << "long: " << m_longitude;
 
     // Emit signals to notify any connected slots
-    emit latitudeChanged();
-    emit longitudeChanged();
-    emit altitudeChanged();
+    //emit latitudeChanged();
+    //emit longitudeChanged();
+    //emit altitudeChanged();
     //qDebug() << m_sysid << ":" << m_yaw;
-    emit yawChanged();
+    //emit yawChanged();
     if(m_sysid == 3){
         //qDebug() << m_sysid << ":" << m_isSelected;
     }

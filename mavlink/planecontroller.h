@@ -3,6 +3,7 @@
 
 #include "plane.h"
 #include <QQmlContext>
+#include <QTimer>
 #include <vector>
 
 class PlaneController : public QObject
@@ -14,8 +15,8 @@ class PlaneController : public QObject
 public:
     struct planestatus {
         plane* plane2;
-        bool isValid;
-        bool isLocal;
+        bool isValid = false;
+        bool isLocal = false;
     }st;
     explicit PlaneController(QObject *parent = nullptr);
     void setQmlContext(QQmlContext *context);
@@ -54,5 +55,7 @@ signals:
 private:
     std::vector<plane*> m_planes;
     int m_selectedid;
-
+    QTimer m_updateTimer;
+private slots:
+    void throttledUpdate();
 };

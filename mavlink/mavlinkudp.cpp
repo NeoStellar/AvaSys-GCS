@@ -95,7 +95,7 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     m_heartbeatTimer.start(1000);
 
 
-    m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
+    //m_planeController->addOrUpdatePlane(1, 0,0,0, m_teknofestProperties->simMode());
     return 1;
 }
 

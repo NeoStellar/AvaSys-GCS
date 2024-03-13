@@ -5,10 +5,13 @@
 #include "plane.h"
 
 PlaneController::PlaneController(QObject *parent)
-    : QObject(parent), m_selectedid(-1)
+    : QObject(parent), m_selectedid(-5)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<plane*>>("std::vector<plane*>");
+    m_updateTimer.setInterval(500);
+    connect(&m_updateTimer, &QTimer::timeout, this, &PlaneController::throttledUpdate);
+    m_updateTimer.start();
 }
 void PlaneController::setQmlContext(QQmlContext *context)
 {
@@ -26,8 +29,8 @@ void PlaneController::addPlane(int teamid, double latitude, double longitude, in
     plan->setAltitude(altitude);
     if (plan != nullptr) {
         m_planes.push_back(plan);
-        qDebug() << "plane list changed";
-        emit planesChanged();
+        //qDebug() << "plane list changed";
+        //emit planesChanged();
     } else {
         qDebug() << "Error: Attempting to append a null plane object to m_planes.";
     }
@@ -75,7 +78,7 @@ plane *PlaneController::findPlane(int id)
 void PlaneController::removePlane(plane* plane)
 {
     m_planes.erase(std::remove(m_planes.begin(), m_planes.end(), plane), m_planes.end());
-    emit planesChanged();
+    //emit planesChanged();
 }
 
 void PlaneController::updatePlane(int id, double latitude, double longitude, int altitude)
@@ -85,12 +88,12 @@ void PlaneController::updatePlane(int id, double latitude, double longitude, int
         check.plane2->setGpsSaati(QDateTime::currentDateTime());
         check.plane2->updateLocation(latitude, longitude, altitude);
     }
-    emit planesChanged();
+    //emit planesChanged();
 }
 
 void PlaneController::updatePlane(plane* &plane, double latitude, double longitude, int altitude){
     plane->updateLocation(latitude, longitude, altitude);
-    emit planesChanged();
+    //emit planesChanged();
 }
 
 PlaneController::planestatus PlaneController::quickCheck(int id)
@@ -143,7 +146,7 @@ void PlaneController::addOrUpdatePlane(int id, double latitude, double longitude
             qDebug() << "Error: Attempting to append a null plane object to m_planes.";
         }
     }
-    emit planesChanged();
+    //emit planesChanged();
 }
 
 void PlaneController::updateYaw(int id, float yaw)
@@ -206,7 +209,8 @@ void PlaneController::changeSelection(int systemid)
         qDebug() << "local select";
 
         stat.plane2->setIsSelected(stat.plane2->sysid() != m_selectedid);
-        m_selectedid = stat.plane2->sysid() == m_selectedid ? -3 : stat.plane2->sysid();
+        setSelectedid(stat.plane2->sysid() == m_selectedid ? -3 : stat.plane2->sysid());
+        //m_selectedid = stat.plane2->sysid() == m_selectedid ? -3 : stat.plane2->sysid();
 
     }else if(stat.isValid && !stat.isLocal){
         qDebug() << "tekno select";
@@ -214,6 +218,11 @@ void PlaneController::changeSelection(int systemid)
         m_selectedid = stat.plane2->teamid() == m_selectedid ? -9 : stat.plane2->teamid();
     }
     qDebug() << "Selected id: " << m_selectedid;
+    for (plane* plane : m_planes){
+        if(plane->sysid() != m_selectedid){
+            plane->setIsSelected(false);
+        }
+    }
 }
 
 void PlaneController::removeLocalPlane(int sysid)
@@ -223,6 +232,11 @@ void PlaneController::removeLocalPlane(int sysid)
             removePlane(plane);
         }
     }
+}
+
+void PlaneController::throttledUpdate()
+{
+    emit planesChanged();
 }
 
 int PlaneController::selectedid() const
