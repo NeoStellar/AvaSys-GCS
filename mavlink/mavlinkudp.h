@@ -8,12 +8,14 @@
 #include <QThread>
 #include <utils/httpclient.h>
 #include <utils/mavlinkproperties.h>
+#include <utils/teknocircles.h>
 #include <utils/teknofestproperties.h>
 #include <utils/udpmanager.h>
 #include <serial/serialmanager.h>
 
 class MavLinkUDP : public QObject {
     Q_OBJECT
+    Q_PROPERTY(std::vector<TeknoCircles*> circles READ circles WRITE setCircles NOTIFY circlesChanged FINAL)
 public:
     explicit MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *m_planeController, TeknofestProperties* teknofestProperties, HttpClient* httpClient, QObject *parent);
 
@@ -37,6 +39,12 @@ public:
 
 
     void initTeknofest();
+    Q_INVOKABLE std::vector<TeknoCircles *> circles() const;
+    void setCircles(const std::vector<TeknoCircles *> &newCircles);
+
+
+
+
 signals:
     // Inherited signals from UDPManager
 
@@ -59,6 +67,9 @@ signals:
     void receiveHeartbeat();
     void onArmedChangedSlot(bool armed);
 
+    void circlesChanged();
+
+
 public slots:
     void locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude);
     void yawDataRecieved(int sysid, float yaw);
@@ -80,6 +91,7 @@ private:
     HttpClient *m_httpClient;
     QTimer m_heartbeatTimer;
     void stopHeartbeat();
+    std::vector<TeknoCircles*> m_circles;
 
 private slots:
     // Slot to handle armedChanged signal

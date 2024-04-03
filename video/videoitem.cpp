@@ -43,6 +43,8 @@ GstFlowReturn VideoItem::callback(GstElement *sink, gpointer data) {
 }
 
 void VideoItem::start_gst() {
+
+    //gchar *descr = g_strdup_printf("udpsrc port=%d ! application/x-rtp, payload=96 ! video/x-raw,format=BGR ! appsink name=sink", port);
     gchar *descr = g_strdup_printf("udpsrc port=%d ! application/x-rtp, payload=96 ! rtph264depay ! h264parse ! avdec_h264 ! videoconvert ! video/x-raw,format=BGR ! videoconvert ! appsink name=sink", port);
     GError *error = nullptr;
 

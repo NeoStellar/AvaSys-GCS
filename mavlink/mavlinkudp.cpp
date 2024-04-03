@@ -18,7 +18,26 @@ MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *pl
     m_httpClient(httpClient)
 {
     qRegisterMetaType<int32_t>("int32_t");
+    qRegisterMetaType<std::vector<plane*>>("std::vector<TeknoCircles*>");
     connect(m_mavLinkProperties, &MavLinkProperties::armedStatusChanged, this, &MavLinkUDP::armedChanged);
+
+
+    // these are examples
+    TeknoCircles* tekno = new TeknoCircles( 37.53, -122.31, 1000, "Yasaklı Alan", 2);
+    tekno->setEmpty(false);
+    tekno->setBorderColor("black");
+    tekno->setBorderSize(300);
+    tekno->setInsideColor("darkred");
+    tekno->setOpacity(0.8);
+    m_circles.push_back(tekno);
+    TeknoCircles* tekno2 = new TeknoCircles( 37.53, -122.31, 1200, "", 1);
+    tekno2->setEmpty(false);
+    tekno2->setInsideColor("lightblue");
+    tekno2->setBorderColor("black");
+    tekno2->setBorderSize(5000);
+    tekno2->setOpacity(0.5);
+    m_circles.push_back(tekno2);
+    emit circlesChanged();
 }
 
 MavLinkUDP::~MavLinkUDP()
@@ -299,3 +318,19 @@ plane *MavLinkUDP::findMainPlane()
         return nullptr;
     }
 }
+
+std::vector<TeknoCircles *> MavLinkUDP::circles() const
+{
+    return m_circles;
+}
+
+void MavLinkUDP::setCircles(const std::vector<TeknoCircles *> &newCircles)
+{
+    if (m_circles == newCircles)
+        return;
+    m_circles = newCircles;
+    emit circlesChanged();
+}
+
+
+

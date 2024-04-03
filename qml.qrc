@@ -15,5 +15,6 @@
         <file>ui/TopPanel/TopPanel.qml</file>
         <file>ui/DrawerPanel/DrawerPanel.qml</file>
         <file>ui/VideoPanel/VideoPanel.qml</file>
+        <file>ui/assets/marker.png</file>
     </qresource>
 </RCC>

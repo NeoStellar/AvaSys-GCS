@@ -153,7 +153,6 @@ void SerialManager::handle(){
                     //qDebug() << "Longitude: " << fLong;
                     //qDebug() << "Altitude: " << fAlt;
                     break;
-
                 }
         }
     }

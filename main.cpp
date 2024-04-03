@@ -4,7 +4,6 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QSslSocket>
-#include <iostream>
 #include <mavlink/planecontroller.h>
 #include <utils/httpclient.h>
 #include <utils/teknofestproperties.h>
@@ -16,7 +15,7 @@
 
 
 bool isSerialPort(const QString &filename) {
-    return filename.startsWith("ttyUSB");
+    return filename.startsWith("ttyUSB") || filename.startsWith("ttyACM");
 }
 QStringList get_available_ports() {
     //std::vector<std::string> ports;

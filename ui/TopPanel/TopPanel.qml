@@ -16,7 +16,7 @@ Rectangle{
     height: parent.height / 12
     color: "#A6000000"
     property var stringList2: {
-        return mavlinkProperties.ports();
+        return mavlinkProperties.ports;
     }
     Text {
         id: text2
