@@ -28,7 +28,6 @@ Rectangle {
         }
 
     }
-
     Map{
         id: map
         plugin: mapPlugin
@@ -149,6 +148,7 @@ Rectangle {
             onObjectRemoved: map.removeMapItemGroup(object)
         }
 
+
         MapQuickItem {
             sourceItem: MapItemGroup {
                 Image {
@@ -170,7 +170,7 @@ Rectangle {
                     anchors.bottom: asdkl.top
                 }
             }
-            coordinate: QtPositioning.coordinate(37.55, -122.31)
+            coordinate: QtPositioning.coordinate(teknofestProperties.qrLatitude, teknofestProperties.qrLongitude)
         }
 
         MapItemView{

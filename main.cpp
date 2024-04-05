@@ -12,6 +12,8 @@
 #include <QList>
 #include <QString>
 #include <QDir>
+#include <QMetaType>
+
 
 
 bool isSerialPort(const QString &filename) {
@@ -56,10 +58,10 @@ int main(int argc, char *argv[])
     PlaneController planeController;
     HttpClient client;
     TeknofestProperties teknofestProperties;
+    teknofestProperties.setQrLongitude(-122.50);
     mavlinkProperties.setPorts(get_available_ports());
     MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &app);
     QQmlApplicationEngine engine;
-
 
 
 

@@ -1,8 +1,10 @@
 #include "teknofestproperties.h"
 
+#include <QDebug>
+#include <QMetaType>
 TeknofestProperties::TeknofestProperties(QObject *parent) : QObject{parent},
     m_session_id("asdas"),
-    m_simMode(true),m_planeids()
+    m_simMode(true),m_planeids(), m_qrLatitude(37.55), m_qrLongitude(-122.31)
 {
 
 }
@@ -76,4 +78,30 @@ void TeknofestProperties::addPlane(int id)
     }
 
     emit planeidsChanged();
+}
+
+double TeknofestProperties::qrLatitude() const
+{
+    return m_qrLatitude;
+}
+
+void TeknofestProperties::setQrLatitude(double newQrLatitude)
+{
+    if (qFuzzyCompare(m_qrLatitude, newQrLatitude))
+        return;
+    m_qrLatitude = newQrLatitude;
+    emit qrLatitudeChanged();
+}
+
+double TeknofestProperties::qrLongitude() const
+{
+    return m_qrLongitude;
+}
+
+void TeknofestProperties::setQrLongitude(double newQrLongitude)
+{
+    if (qFuzzyCompare(m_qrLongitude, newQrLongitude))
+        return;
+    m_qrLongitude = newQrLongitude;
+    emit qrLongitudeChanged();
 }
