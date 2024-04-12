@@ -5,6 +5,7 @@
 #include <QQmlContext>
 #include <QTimer>
 #include <vector>
+#include <utils/notificationcenter.h>
 
 class PlaneController : public QObject
 {
@@ -18,7 +19,7 @@ public:
         bool isValid = false;
         bool isLocal = false;
     }st;
-    explicit PlaneController(QObject *parent = nullptr);
+    explicit PlaneController(NotificationCenter *notificationCenter, QObject *parent = nullptr);
     void setQmlContext(QQmlContext *context);
 
     void setSelectedid(int newSelectedid);
@@ -30,7 +31,7 @@ public:
     void updatePlane(plane *&plane, double latitude, double longitude, int altitude);
 
     Q_INVOKABLE int selectedid() const;
-    Q_INVOKABLE plane *findMainPlane(int id);
+    Q_INVOKABLE plane *findMainPlane(int id, bool tekno = false);
     Q_INVOKABLE plane* findPlane(int id);
     Q_INVOKABLE plane* findSelected();
     Q_INVOKABLE std::vector<plane *> &planes();
@@ -54,6 +55,7 @@ signals:
     void selectedidChanged();
 private:
     std::vector<plane*> m_planes;
+    NotificationCenter *m_notificationCenter;
     int m_selectedid;
     QTimer m_updateTimer;
 private slots:

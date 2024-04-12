@@ -6,6 +6,7 @@
 #include <QSslSocket>
 #include <mavlink/planecontroller.h>
 #include <utils/httpclient.h>
+#include <utils/notificationcenter.h>
 #include <utils/teknofestproperties.h>
 #include <QJsonDocument>
 #include <video/videoitem.h>
@@ -54,13 +55,14 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     VideoItem videoItem;
     qmlRegisterType<VideoItem>("CustomTypes", 1, 0, "VideoItem");
+    NotificationCenter notificationCenter;
     MavLinkProperties mavlinkProperties;
-    PlaneController planeController;
+    PlaneController planeController(&notificationCenter);
     HttpClient client;
     TeknofestProperties teknofestProperties;
     teknofestProperties.setQrLongitude(-122.50);
     mavlinkProperties.setPorts(get_available_ports());
-    MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &app);
+    MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &notificationCenter, &app);
     QQmlApplicationEngine engine;
 
 
@@ -82,26 +84,32 @@ int main(int argc, char *argv[])
     engine.rootContext()->setContextProperty("mavlinkProperties", &mavlinkProperties);
     engine.rootContext()->setContextProperty("teknofestProperties", &teknofestProperties);
     engine.rootContext()->setContextProperty("stringList", QVariant::fromValue(mavlinkProperties.ports()));
-
+    engine.rootContext()->setContextProperty("NotificationCenter", &notificationCenter);
     QString ipString = "127.0.0.1"; // Example IP address
 
-    bool mavproxy = true;
-    int port = mavproxy ? 3131 : 14550;//14550; //teknofestProperties.simMode() ? 3131 : 14550;//3131; //3131; //14550; // Example port
+    int port = 14550;
 
     int result = mavLink.initialize(ipString, port);
     if (result < 0) {
-        qDebug() << "Initialization failed. Error code:" << result;
+        // Try mavproxy
+        result = mavLink.initialize(ipString, 3131);
+        if(result < 0){
+            qDebug() << "Initialization failed. Error code:" << result;
+        }
         // Handle initialization failure
         //return -1;
     }else {
-        mavLink.initTeknofest();
+        //mavLink.initTeknofest();
     }
+
 
     planeController.setQmlContext(engine.rootContext());
 
     if(mavlinkProperties.connected()){
         qDebug() << "Connected to mavlink.";
-        if(teknofestProperties.simMode()){
+        /*
+         * This can not be used because they need to specify.
+         * if(teknofestProperties.simMode()){
             //plane* plane = mavLink.createDummyPlane();
             plane* plane = planeController.findMainPlane(teknofestProperties.takimid());
 
@@ -111,8 +119,9 @@ int main(int argc, char *argv[])
             //qDebug() << json;
             //qDebug() << "------";
             QString serverUrl = "http://replica.neostellar.net/api/telemetri_gonder"; // Example server URL
-            client.sendLocationData(serverUrl, &teknofestProperties, &planeController, json);
-        }
+
+            client.sendLocationData(&teknofestProperties, &planeController, json);
+        } */
     }
     engine.load(url);
     return app.exec();

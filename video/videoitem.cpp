@@ -4,7 +4,7 @@
 #include <QImage>
 #include <QPainter>
 
-VideoItem::VideoItem(QQuickItem *parent) : QQuickPaintedItem(parent), port(5600) {
+VideoItem::VideoItem(QQuickItem *parent) : QQuickPaintedItem(parent), port(5600), m_isRunning(false) {
     qRegisterMetaType<cv::Mat>("cv::Mat");
     _frame = cv::Mat(480, 640, CV_8UC3); // Initialize a 480x640 color (3-channel) matrix
     gst_init(nullptr, nullptr);
@@ -34,7 +34,7 @@ GstFlowReturn VideoItem::callback(GstElement *sink, gpointer data) {
     gst_buffer_map(buf, &map, GST_MAP_READ);
 
     self->_frame = cv::Mat(height, width, CV_8UC3, map.data).clone();
-
+    self->setIsRunning(true);
     gst_buffer_unmap(buf, &map);
     gst_sample_unref(sample);
 
@@ -67,7 +67,6 @@ void VideoItem::start_gst() {
     gst_app_sink_set_max_buffers(GST_APP_SINK(sink), 2);
     gst_base_sink_set_sync(GST_BASE_SINK(sink), false);
     g_signal_connect(sink, "new-sample", G_CALLBACK(callback), this);
-
     gst_element_set_state(video_pipe, GST_STATE_PLAYING);
 }
 
@@ -78,4 +77,17 @@ void VideoItem::updateFrame(const cv::Mat &frame) {
 
 void VideoItem::run() {
     start_gst();
+}
+
+bool VideoItem::isRunning() const
+{
+    return m_isRunning;
+}
+
+void VideoItem::setIsRunning(bool newIsRunning)
+{
+    if (m_isRunning == newIsRunning)
+        return;
+    m_isRunning = newIsRunning;
+    emit isRunningChanged();
 }

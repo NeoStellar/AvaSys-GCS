@@ -20,6 +20,13 @@ Drawer {
         id: connectionTypeBox
         width: drawer.width
         model: ["TCP", "Serial Com"]
+        background: Rectangle {
+            border.width: connectionTypeBox.activeFocus ? 2 : 1
+            border.color: "black"
+            color: "lightgray"
+            radius: 5
+        }
+
         onCurrentIndexChanged: {
             // TCP seçildiğinde
             if (currentIndex === 0) {
@@ -66,6 +73,10 @@ Drawer {
             id: preIpTextInput
             text: "IP Address"
             color: "white"
+            anchors{
+                left: tcpContent.left
+                leftMargin: 10
+            }
         }
 
         TextInput {
@@ -73,6 +84,7 @@ Drawer {
             objectName: "ipTextInput"
             width: tcpContent.width / 2
             anchors {
+                leftMargin: 10
                 top: preIpTextInput.bottom
                 left: tcpContent.left
             }
@@ -97,11 +109,12 @@ Drawer {
             anchors {
                 top: prePortTextInput.bottom
                 right: tcpContent.right
+                left: prePortTextInput.left
             }
 
             height: 30
             color: "white"
-            text: "14560"
+            text: "14550"
         }
 
         Button {
@@ -112,6 +125,14 @@ Drawer {
                 left: tcpContent.left
                 right: tcpContent.right
                 top: ipTextInput.bottom
+                rightMargin: 10
+                leftMargin: 10
+            }
+            background: Rectangle {
+                border.width: tcpButton.activeFocus ? 2 : 1
+                border.color: "black"
+                color: "lightgray"
+                radius: 5
             }
             onClicked: {
                 console.log("Connecting to TCP...")
@@ -131,7 +152,12 @@ Drawer {
                 left: ipTextInput.left
                 //horizontalCenter: tcpContent.horizontalCenter
             }
-
+            background: Rectangle {
+                border.width: armButton.activeFocus ? 2 : 1
+                border.color: "black"
+                color: "lightgray"
+                radius: 5
+            }
             onClicked: {
                 mavlinkProperties.toggleArmStatus(pressedWithShift);
             }
@@ -157,11 +183,18 @@ Drawer {
             anchors {
                 top: tcpButton.bottom
                 topMargin: 10
+                rightMargin: 10
+                leftMargin: 5
                 left: armButton.right
                 right: portTextInput.right
                 //horizontalCenter: tcpContent.horizontalCenter
             }
-
+            background: Rectangle {
+                border.width: takeOffButton.activeFocus ? 2 : 1
+                border.color: "black"
+                color: "lightgray"
+                radius: 5
+            }
             onClicked: {
                 mavlinkHandler.flyStateChanged(!mavlinkProperties.isFlying);
                 console.log(!mavlinkProperties.isFlying);
@@ -254,6 +287,12 @@ Drawer {
                 topMargin: 10
             }
 
+            background: Rectangle {
+                border.width: serialButton.activeFocus ? 2 : 1
+                border.color: "black"
+                radius: 5
+                color: "lightgray"
+            }
             onClicked: {
                 console.log("Connecting to Serial Com...")
                 mavlinkHandler.connectSerial("/dev/" + usbComboBox.currentText, parseInt(baudRateInput.text));
@@ -321,6 +360,200 @@ Drawer {
             }
         }
     }
+    Rectangle {
+        id: qrLocation
+        color: "transparent"
+        width: parent.width
+        height: parent.height * 0.33
+        anchors {
+            bottom: teknofestContent.top
+        }
+        Text {
+            id: qrLocationTitle
+            color: "white"
+            text: "QR Location"
+            anchors {
+                top: qrLocation.top
+                left: qrLocation.left
+                right: qrLocation.right
+                topMargin: 5
+            }
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+        }
+        Text {
+            id: qrLatitude
+            anchors {
+                top: qrLocationTitle.bottom
+                left: qrLocation.left
+                leftMargin: 5
+            }
+            width: qrLocation.width / 2.1
+            color: "white"
+            text: "QR Latitude"
+        }
+        TextInput {
+            id: qrLatitudeBox
+            anchors {
+                top: qrLatitude.bottom
+                left: qrLatitude.left
+                right: qrLocation.right
+                topMargin: 10
+                leftMargin: 5
+            }
+            color: "white"
+            text: "-100.2"
+        }
+        Text {
+            id: qrLongitude
+            anchors {
+                top: qrLocationTitle.bottom
+                right: qrLocation.right
+                topMargin: 5
+            }
+            width: qrLocation.width / 2.1
+            color: "white"
+            text: "QR Longitude"
+        }
+        TextInput {
+            id: qrLongitudeBox
+            anchors {
+                top: qrLongitude.bottom
+                right: qrLocation.right
+                left: qrLongitude.left
+                rightMargin: 5
+                topMargin: 5
+            }
+            color: "white"
+            text: "37.52"
+        }
+        Button {
+            id: qrButton
+            text: "Enable/Disable QR"
+            anchors {
+                top: qrLongitudeBox.bottom
+                left: qrLocation.left
+                right: qrLocation.right
+                leftMargin: 5
+                rightMargin: 5
+                topMargin: 10
+            }
+            background: Rectangle {
+                border.width: teknofestConnect.activeFocus ? 2 : 1
+                border.color: "black"
+                color: "lightgray"
+                radius: 5
+            }
+        }
+    }
+
+    Rectangle {
+        id: teknofestContent
+        color: "transparent"
+        width: parent.width
+        height: parent.height * 0.33
+        anchors {
+            bottom: parent.bottom
+        }
+        Text {
+            id: teknofestContentTitle
+            color: "white"
+            text: "Teknofest Properties"
+            anchors {
+                top: teknofestContent.top
+                left: teknofestContent.left
+                right: teknofestContent.right
+                topMargin: 5
+            }
+            font.bold: true
+            horizontalAlignment: Text.AlignHCenter
+        }
+        TextInput {
+            id: teknofestURLInput
+            height: 30
+            anchors {
+                left: teknofestContent.left
+                right: teknofestContent.right
+                top: teknofestContentTitle.bottom
+                topMargin: 10
+                leftMargin: 5
+            }
+            color: "white"
+            text: "http://replica.neostellar.net/api"
+            horizontalAlignment: Text.AlignHCenter
+        }
+        Text {
+            id: teknofestUserTitle
+            anchors {
+                top: teknofestURLInput.bottom
+                left: teknofestContent.left
+                leftMargin: 5
+            }
+            width: teknofestContent.width / 2.1
+            color: "white"
+            text: "Teknofest User"
+        }
+
+        TextInput {
+            id: teknofestUserBox
+            height: 30
+            anchors {
+                top: teknofestUserTitle.bottom
+                left: teknofestUserTitle.left
+                right: teknofestUserTitle.right
+                topMargin: 5
+            }
+            color: "white"
+            text: "kullanici2"
+        }
+
+        Text {
+            id: teknofestPassTitle
+            anchors {
+                top: teknofestURLInput.bottom
+                right: teknofestContent.right
+                rightMargin: 5
+            }
+            width: teknofestContent.width / 2.1
+            color: "white"
+            text: "Teknofest Password"
+        }
+        TextInput{
+            id: teknofestPassBox
+            height: 30
+            anchors {
+                topMargin: 5
+                top: teknofestPassTitle.bottom
+                left:  teknofestPassTitle.left
+                right: teknofestPassTitle.right
+            }
+            color: "white"
+            text: "sifre"
+        }
+
+        Button {
+            id: teknofestConnect
+            anchors {
+                top: teknofestPassBox.bottom
+                right: teknofestContent.right
+                left: teknofestContent.left
+                leftMargin: 5
+                rightMargin: 5
+            }
+            background: Rectangle {
+                border.width: teknofestConnect.activeFocus ? 2 : 1
+                border.color: "black"
+                radius: 5
+                color: "lightgray"
+            }
+            onClicked: {
+                mavlinkHandler.initTeknofest(teknofestURLInput.text, teknofestUserBox.text, teknofestPassBox.text)
+            }
+
+            text: "Connect"
+        }
+    }
+
     onOpenedChanged: {
         if (opened && usbComboBox.visible)
             usbComboBox.popup.open();

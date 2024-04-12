@@ -8,14 +8,15 @@
 #include <unistd.h>
 #include <utils/httpclient.h>
 
-MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *planeController, TeknofestProperties *teknofestProperties, HttpClient *httpClient, QObject *parent)
+MavLinkUDP::MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *planeController, TeknofestProperties *teknofestProperties, HttpClient *httpClient, NotificationCenter* notificationCenter, QObject *parent)
     : QObject(parent),
     m_udpManager(mavlinkProperties),
     m_serialManager(mavlinkProperties),
     m_mavLinkProperties(mavlinkProperties),
     m_planeController(planeController),
     m_teknofestProperties(teknofestProperties),
-    m_httpClient(httpClient)
+    m_httpClient(httpClient),
+    m_notificationCenter(notificationCenter)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<plane*>>("std::vector<TeknoCircles*>");
@@ -44,13 +45,33 @@ MavLinkUDP::~MavLinkUDP()
 {
 
 }
+void MavLinkUDP::connectionErrorHandling(int result){
+    emit errorOccurred(result);
+    qDebug() << result;
+    QString text;
+    text.append("Error occured with initialization!").append("\n");
+    text.append("Code: ").append(QString::number(result));
+    switch (result){
+    case -3:
+        text.append(" (Socket receive failed.)").append("\n");
+        text.append("Are you sure vehicle has connection\nwith this address?");
+        break;
+    case -2:
+        text.append(" (Socket bind failed.)").append("\n");
+        text.append("Are you sure vehicle does NOT have any\nconnection binded with this address?");
+        break;
+    default:
+        break;
+    }
 
+    m_notificationCenter->sendNotification(text, m_notificationCenter->Fatal);
+}
 int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
 {
 
     int result = m_serialManager.initialize(serialPort, baudRate);
     if(result < 0 ){
-        emit errorOccurred(result);
+        connectionErrorHandling(result);
         return result;
     }
     connect(&m_serialManager, &SerialManager::locationDataRecieved, this, &MavLinkUDP::locationDataRecieved);
@@ -59,7 +80,6 @@ int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
     connect(&m_serialManager, &SerialManager::pressureDataReceived, this, &MavLinkUDP::pressureDataReceived);
     connect(&m_serialManager, &SerialManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
     connect(&m_serialManager, &SerialManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
-
 
     m_mavLinkProperties->setConnected(true);
     m_mavLinkProperties->setIsSerial(true);
@@ -72,12 +92,20 @@ int MavLinkUDP::connectSerial(const QString &serialPort, int baudRate)
     // we need to get heartbeat to get system id first.
 
 
-    initTeknofest();
+    //initTeknofest();
     return 1;
 }
 
-void MavLinkUDP::initTeknofest(){
-    std::pair<int, QByteArray> pair = m_httpClient->sendAuthRequest("http://replica.neostellar.net/api/giris", "kullanıcı2", "sifre");
+void MavLinkUDP::initTeknofest(QString url, QString username, QString password){
+    if(m_teknofestProperties->simMode()){
+        return;
+    }
+    m_teknofestProperties->setSimMode(true);
+    m_httpClient->setUrl(url);
+    m_httpClient->setUsername(username);
+    m_httpClient->setPassword(password);
+    //std::pair<int, QByteArray> pair = m_httpClient->sendAuthRequest("http://replica.neostellar.net/api/giris", "kullanıcı2", "sifre");
+    std::pair<int, QByteArray> pair = m_httpClient->sendAuthRequest();
     int takimid = pair.first;
     QByteArray session_id = pair.second;
 
@@ -86,13 +114,31 @@ void MavLinkUDP::initTeknofest(){
 
     qDebug() << m_teknofestProperties->takimid();
     qDebug() << m_teknofestProperties->session();
+
+    if (session_id.isNull() || session_id.isEmpty()){
+        qDebug() << "Authentication failed!";
+        m_notificationCenter->sendNotification("Authentication Failed!", m_notificationCenter->Error);
+        m_teknofestProperties->setSimMode(false);
+        return;
+    }
+
+    plane* plane = m_planeController->findMainPlane(m_teknofestProperties->takimid(), true);
+
+    qDebug() << "plane:" << plane->airspeed();
+    QJsonObject json = plane->toJson();
+
+    //QString serverUrl = url + "/telemetri_gonder"; // Example server URL
+    int result = m_httpClient->sendLocationData(m_teknofestProperties, m_planeController, json);
+    if (result != 0){
+        m_teknofestProperties->setSimMode(false);
+        m_notificationCenter->sendNotification("Trial to send location data has been failed!", m_notificationCenter->Error);
+    }
 }
 
 int MavLinkUDP::initialize(const QString& ipString, int port) {
     int result = m_udpManager.initialize(ipString, port);
     if (result < 0) {
-        // Forward error to parent
-        emit errorOccurred(result);
+        connectionErrorHandling(result);
         return result;
     }
 
@@ -114,23 +160,10 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
             , &MavLinkUDP::sendHeartbeat);
     m_heartbeatTimer.start(1000);
 
-    initTeknofest();
+    //initTeknofest();
     return 1;
 }
 
-template <typename T>
-bool contains(
-    const std::vector<T>& vecObj,
-    const T& element)
-{
-    // Get the iterator of first occurrence
-    // of given element in vector
-    auto it = std::find(
-        vecObj.begin(),
-        vecObj.end(),
-        element) ;
-    return it != vecObj.end();
-}
 void MavLinkUDP::locationDataRecieved(int sysid, float latitude, float longitude, int32_t altitude){
     m_planeController->setTeam(sysid, !m_teknofestProperties->simMode() ? -1 : m_teknofestProperties->takimid());
     m_planeController->addOrUpdatePlane(sysid, latitude, longitude, altitude, m_teknofestProperties->simMode());
@@ -157,50 +190,20 @@ void MavLinkUDP::onHeartbeatTimeout() {
 void MavLinkUDP::sendHeartbeat() {
 
     if(m_mavLinkProperties->connected()){
-        // Kalp atışı gönderme işlemi
         send_heartbeat();
         if(m_teknofestProperties->simMode()){
             plane* pl = findMainPlane();
             // fuck this line.
+            // many months later still fuck this line
             pl->setTeamid(m_teknofestProperties->takimid());
             pl->setGpsSaati(QDateTime::currentDateTime());
             //plane* plane = m_planeController->findPlane(pl->sysid());
             //plane* plane = createDummyPlane();
             QJsonObject data = pl->toJson();
-            m_httpClient->sendLocationData("http://replica.neostellar.net/api/telemetri_gonder", m_teknofestProperties, m_planeController, data);
+            m_httpClient->sendLocationData(m_teknofestProperties, m_planeController, data);
         }
     }
 }
-plane* MavLinkUDP::createDummyPlane(){
-    plane* plane = new class plane();
-    plane->setSysid(m_teknofestProperties->takimid());
-    plane->setAltitude(10);
-    plane->setLatitude(-122.25474548339844);
-    plane->setLongitude(37.52430725097656);
-    plane->setYaw(2);
-    /*plane::LocationData locationData;
-    locationData.gpsSaati = QDateTime::currentDateTime();
-    locationData.hedefGenislik = 0;
-    locationData.hedefMerkezX = 0;
-    locationData.hedefMerkezY = 0;
-    locationData.hedefYukseklik = 0;
-    locationData.ihaBatarya = 0;
-    locationData.ihaBoylam = -122.25474548339844;
-    locationData.ihaDikilme = 0;
-    locationData.ihaEnlem = 37.52430725097656;
-    locationData.ihaHiz = 0;
-    locationData.ihaIrtifa = 10;
-    locationData.ihaKilitlenme = false;
-    locationData.ihaOtonom = false;
-    locationData.ihaYatis = 3;
-    locationData.ihaYonelme = plane->yaw();
-    locationData.takimNumarasi = m_teknofestProperties->takimid();
-
-    plane->setLocationData(locationData);*/
-    return plane;
-}
-
-
 
 int MavLinkUDP::send_heartbeat()
 {
@@ -214,7 +217,7 @@ int MavLinkUDP::send_heartbeat()
         heartbeat.custom_mode = 0;
         heartbeat.system_status = 0;
 
-        mavlink_msg_heartbeat_encode(1, 200, &message, &heartbeat);
+        mavlink_msg_heartbeat_encode(m_mavLinkProperties->sysid(), 200, &message, &heartbeat);
 
 
         uint8_t buffer[MAVLINK_MAX_PACKET_LEN];
@@ -263,6 +266,13 @@ void MavLinkUDP::armedChanged(bool armed, bool forced){
         qDebug() << (forced ? "Forcefully" : "Peacefully")
                  << (armed ? "armed" : "disarmed")
                  << "the plane with id: " << sysid << ".";
+        QString text;
+        text.append(forced ? "Forcefully" : "Peacefully").append(" ");
+        text.append(armed ? "armed" : "disarmed").append(" ");
+        text.append("the plane with id: ").append(QString::number(sysid)).append(".");
+        m_notificationCenter->sendNotification(text, m_notificationCenter->Success);
+    }else {
+        m_notificationCenter->sendNotification("AvaSYS does not have connected vehicles.", m_notificationCenter->Error);
     }
 }
 
@@ -283,6 +293,7 @@ void MavLinkUDP::flyStateChanged(bool isFlying)
             flyingStateChanged(isFlying);
             //m_udpManager.sendMAVLinkCommand(sysid, !isFlying ? MAV_CMD_NAV_TAKEOFF : MAV_CMD_NAV_RETURN_TO_LAUNCH, 15 ,0, 0, 30 ,0,0,0);
         }
+        m_notificationCenter->sendNotification("Sent takeoff command!", m_notificationCenter->Success);
         qDebug() << "Sent takeoff command!";
         //qDebug() << (forced ? "Forcefully" : "Peacefully")
         //         << (armed ? "armed" : "disarmed")
@@ -290,14 +301,16 @@ void MavLinkUDP::flyStateChanged(bool isFlying)
     }
 }
 
-void MavLinkUDP::onDisconnect(int sysid)
-{
 
-}
 
 void MavLinkUDP::flyingStateChanged(bool isFlying)
 {
     m_mavLinkProperties->setIsFlying(isFlying);
+}
+
+NotificationCenter *MavLinkUDP::notificationCenter() const
+{
+    return m_notificationCenter;
 }
 
 TeknofestProperties *MavLinkUDP::teknofestProperties() const
@@ -334,3 +347,37 @@ void MavLinkUDP::setCircles(const std::vector<TeknoCircles *> &newCircles)
 
 
 
+/// To be removed later.
+
+plane* MavLinkUDP::createDummyPlane(){
+    plane* plane = new class plane();
+    plane->setSysid(m_teknofestProperties->takimid());
+    plane->setAltitude(10);
+    plane->setLatitude(-122.25474548339844);
+    plane->setLongitude(37.52430725097656);
+    plane->setYaw(2);
+    /*plane::LocationData locationData;
+    locationData.gpsSaati = QDateTime::currentDateTime();
+    locationData.hedefGenislik = 0;
+    locationData.hedefMerkezX = 0;
+    locationData.hedefMerkezY = 0;
+    locationData.hedefYukseklik = 0;
+    locationData.ihaBatarya = 0;
+    locationData.ihaBoylam = -122.25474548339844;
+    locationData.ihaDikilme = 0;
+    locationData.ihaEnlem = 37.52430725097656;
+    locationData.ihaHiz = 0;
+    locationData.ihaIrtifa = 10;
+    locationData.ihaKilitlenme = false;
+    locationData.ihaOtonom = false;
+    locationData.ihaYatis = 3;
+    locationData.ihaYonelme = plane->yaw();
+    locationData.takimNumarasi = m_teknofestProperties->takimid();
+
+    plane->setLocationData(locationData);*/
+    return plane;
+}
+void MavLinkUDP::onDisconnect(int sysid)
+{
+
+}

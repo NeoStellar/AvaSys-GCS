@@ -13,8 +13,6 @@
 HttpClient::HttpClient(QObject *parent)
     : QObject{parent}
 {
-
-
 }
 
 void HttpClient::sendGetRequest(const QString &url) {
@@ -126,7 +124,7 @@ void HttpClient::sendGetRequest(const QString &url, const QByteArray &jsonData, 
 
 void HttpClient::sendAuthRequest(const QString &url, const QString &kadi, const QString &sifre,  std::function<void(std::pair<int, QByteArray>)> callback)
 {
-    QUrl requestUrl(url);
+    QUrl requestUrl(url + "/giris");
 
     // Create a JSON object
     QJsonObject jsonData;
@@ -262,14 +260,14 @@ std::vector<plane*> HttpClient::handlePostResponse(const QByteArray &response, P
     return planes;
 }
 
-std::pair<int, QByteArray> HttpClient::sendAuthRequest(const QString &url, const QString &kadi, const QString &sifre)
+std::pair<int, QByteArray> HttpClient::sendAuthRequest()
 {
-    QUrl requestUrl(url);
+    QUrl requestUrl(m_url + "/giris");
 
     // Create a JSON object
     QJsonObject jsonData;
-    jsonData["kadi"] = kadi;
-    jsonData["sifre"] = sifre;
+    jsonData["kadi"] = m_username;
+    jsonData["sifre"] = m_password;
     // Convert JSON data to string
     QJsonDocument jsonDoc(jsonData);
     QByteArray jsonDataBytes = jsonDoc.toJson(QJsonDocument::Compact);
@@ -321,15 +319,12 @@ std::pair<int, QByteArray> HttpClient::sendAuthRequest(const QString &url, const
     return pair;
 }
 
-void HttpClient::sendLocationData(const QString &url, TeknofestProperties* teknofestProperties, PlaneController* planeController, const QJsonObject &jsonObject)
+int HttpClient::sendLocationData(TeknofestProperties* teknofestProperties, PlaneController* planeController, const QJsonObject &jsonObject)
 {
     // Construct JSON object with the provided data
 
     //qDebug()<< teknofestProperties->takimid();
     //qDebug() << jsonObject;
-    if(!teknofestProperties->simMode()){
-        return;
-    }
     // Convert JSON object to byte array
     QJsonDocument jsonDoc(jsonObject);
     QByteArray postData = jsonDoc.toJson(QJsonDocument::Compact);
@@ -341,7 +336,7 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
     //qDebug() << "AKDJASKDJA " << teknofestProperties->takimid();
 
 
-    QNetworkRequest request(url);
+    QNetworkRequest request(m_url + "/telemetri_gonder");
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
     // Set cookie header
@@ -366,11 +361,50 @@ void HttpClient::sendLocationData(const QString &url, TeknofestProperties* tekno
 
         planeController->setPlanes(list);
 
+        return 0;
         //qDebug() << "Response: " << message;
     } else {
         qDebug() << "Error occurred 2: " << reply->errorString();
     }
     reply->deleteLater();
+    return 1;
+}
 
+QString HttpClient::url() const
+{
+    return m_url;
+}
 
+void HttpClient::setUrl(const QString &newUrl)
+{
+    if (m_url == newUrl)
+        return;
+    m_url = newUrl;
+    emit urlChanged();
+}
+
+QString HttpClient::username() const
+{
+    return m_username;
+}
+
+void HttpClient::setUsername(const QString &newUsername)
+{
+    if (m_username == newUsername)
+        return;
+    m_username = newUsername;
+    emit usernameChanged();
+}
+
+QString HttpClient::password() const
+{
+    return m_password;
+}
+
+void HttpClient::setPassword(const QString &newPassword)
+{
+    if (m_password == newPassword)
+        return;
+    m_password = newPassword;
+    emit passwordChanged();
 }

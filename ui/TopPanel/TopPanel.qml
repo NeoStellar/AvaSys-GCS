@@ -69,7 +69,7 @@ Rectangle{
                     try {
                         dateTimeDisplay.text = "GPS Clock: " + plane.gpsSaati.getHours() + ":" + plane.gpsSaati.getMinutes();
                     }catch(error){
-                        dateTimeDisplay.text = "Clock can not be shown. (Not connected)";
+                        dateTimeDisplay.text = "Clock can not be shown.";
                     }
                 }
             }
@@ -78,8 +78,19 @@ Rectangle{
 
         Button{
             text: "Connection"
-            anchors.right: parent.right
-            anchors.verticalCenter: topBar.verticalCenter
+            font.pixelSize: 14
+            anchors {
+                right: parent.right
+                verticalCenter: topBar.verticalCenter
+                rightMargin: 10
+            }
             onClicked: drawer.open()
+            background: Rectangle {
+                color: "lightgray"
+                border.width: parent.activeFocus ? 2 : 1
+                border.color: "black"
+                radius: 5
+            }
+
         }
 }

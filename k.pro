@@ -47,6 +47,7 @@ SOURCES += \
         serial/serialmanager.cpp \
         utils/httpclient.cpp \
         utils/mavlinkproperties.cpp \
+        utils/notificationcenter.cpp \
         utils/teknocircles.cpp \
         utils/teknofestproperties.cpp \
         utils/udpmanager.cpp \
@@ -567,6 +568,7 @@ HEADERS += \
     serial/serialmanager.h \
     utils/httpclient.h \
     utils/mavlinkproperties.h \
+    utils/notificationcenter.h \
     utils/teknocircles.h \
     utils/teknofestproperties.h \
     utils/udpmanager.h \

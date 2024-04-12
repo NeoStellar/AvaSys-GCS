@@ -4,8 +4,8 @@
 #include "plane.h"
 #include "plane.h"
 
-PlaneController::PlaneController(QObject *parent)
-    : QObject(parent), m_selectedid(-5)
+PlaneController::PlaneController(NotificationCenter *notificationCenter, QObject *parent)
+    : QObject(parent), m_notificationCenter(notificationCenter), m_selectedid(-5)
 {
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<std::vector<plane*>>("std::vector<plane*>");
@@ -210,6 +210,10 @@ void PlaneController::changeSelection(int systemid)
         setSelectedid(stat.plane2->teamid() == m_selectedid ? -9 : stat.plane2->teamid());
     }
     qDebug() << "Selected id: " << m_selectedid;
+    if(m_selectedid >= 0){
+        m_notificationCenter->sendNotification(QString("Selected ID: ").append(QString::number(m_selectedid)), NotificationCenter::Secondary);
+    }
+
     for (plane* plane : m_planes){
         if(plane->sysid() != m_selectedid){
             plane->setIsSelected(false);
@@ -244,10 +248,13 @@ void PlaneController::setSelectedid(int newSelectedid)
     //emit selectedidChanged();
 }
 
-plane *PlaneController::findMainPlane(int id)
+plane *PlaneController::findMainPlane(int id, bool tekno)
 {
     for(plane* plane : m_planes){
-        if(plane->sysid() != -1 && plane->sysid() == id){
+        if(!tekno && plane->sysid() != -1 && plane->sysid() == id){
+            return plane;
+        }
+        if (tekno && plane->teamid() != -1 && plane->teamid() == id){
             return plane;
         }
     }

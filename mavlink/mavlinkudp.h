@@ -8,6 +8,7 @@
 #include <QThread>
 #include <utils/httpclient.h>
 #include <utils/mavlinkproperties.h>
+#include <utils/notificationcenter.h>
 #include <utils/teknocircles.h>
 #include <utils/teknofestproperties.h>
 #include <utils/udpmanager.h>
@@ -17,7 +18,7 @@ class MavLinkUDP : public QObject {
     Q_OBJECT
     Q_PROPERTY(std::vector<TeknoCircles*> circles READ circles WRITE setCircles NOTIFY circlesChanged FINAL)
 public:
-    explicit MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *m_planeController, TeknofestProperties* teknofestProperties, HttpClient* httpClient, QObject *parent);
+    explicit MavLinkUDP(MavLinkProperties *mavlinkProperties, PlaneController *m_planeController, TeknofestProperties* teknofestProperties, HttpClient* httpClient, NotificationCenter* notificationCenter, QObject *parent);
 
     Q_INVOKABLE int initialize(const QString& ipString, int port);
     Q_INVOKABLE int connectSerial(const QString& serialPort, int baudRate);
@@ -38,12 +39,14 @@ public:
 
 
 
-    void initTeknofest();
+    Q_INVOKABLE void initTeknofest(QString url, QString username, QString password);
     Q_INVOKABLE std::vector<TeknoCircles *> circles() const;
     void setCircles(const std::vector<TeknoCircles *> &newCircles);
 
 
 
+
+    NotificationCenter *notificationCenter() const;
 
 signals:
     // Inherited signals from UDPManager
@@ -89,10 +92,12 @@ private:
     PlaneController *m_planeController;
     TeknofestProperties *m_teknofestProperties;
     HttpClient *m_httpClient;
+    NotificationCenter *m_notificationCenter;
     QTimer m_heartbeatTimer;
     void stopHeartbeat();
     std::vector<TeknoCircles*> m_circles;
 
+    void connectionErrorHandling(int result);
 private slots:
     // Slot to handle armedChanged signal
 

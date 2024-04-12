@@ -8,7 +8,9 @@ import QtQuick.Extras 1.4
 import CustomTypes 1.0
 
 Rectangle {
+    property bool sd: false
     id: videoRect
+    visible: sd
     //opacity: 0.8
     radius: 10
     anchors {
@@ -18,6 +20,7 @@ Rectangle {
     width: 370
     height: 240
     color: "black"
+
 
 
     VideoItem {
@@ -37,6 +40,16 @@ Rectangle {
         }
         Component.onCompleted: {
             video.start_gst()
+        }
+
+        Timer {
+            interval: 500; running: true; repeat: true
+            onTriggered: {
+                if(sd !== video.isRunning){
+                    console.log("Different values! Changing camera status.");
+                }
+                sd = video.isRunning;
+            }
         }
     }
     Text {
