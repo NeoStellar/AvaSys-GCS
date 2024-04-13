@@ -31,6 +31,8 @@ signals:
     void disconnected(int sysid);
     void flyingStateChanged(bool isFlying);
 
+    void attitudeDataReceived(int sysid, float roll, float pitch, float yaw);
+
 protected:
     void run() override;
 
@@ -73,6 +75,7 @@ signals:
     void batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity);
     void flyingStateChanged(bool isFlying);
     void onDisconnect(int sysid);
+    void attitudeDataReceived(int sysid, float roll, float pitch, float yaw);
 public slots:
     void onErrorOccurred(int errorCode);
     void armDataReceived(int sysid, bool armed);

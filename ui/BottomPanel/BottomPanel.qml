@@ -5,7 +5,7 @@ import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 import QtQuick.Controls.Styles 1.4
 import QtQuick.Extras 1.4
-
+import "../Indicators/HdgIndicator"
 Rectangle {
     id: bottomPanel1
     anchors {
@@ -237,6 +237,18 @@ Rectangle {
                 }
             }
         }
+        HdgIndicator {
+            id: hdg
+            anchors {
+                bottom: bottomPanelBig.bottom
+                top: bottomPanelBig.top
+                left: mainPlaneBarGauge.right
+                right: bottomPanelBig.right
+            }
+        }
+        /*
+          Old speed gauge, will delete later on.
+
         CircularGauge {
             id: mainPlaneYawGauge
             minimumValue: 0
@@ -290,6 +302,6 @@ Rectangle {
                     topMargin: a
                 }
             }
-        }
+        }*/
     }
 }

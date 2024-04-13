@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 12.0.2, 2024-04-12T02:09:01. -->
+<!-- Written by QtCreator 12.0.2, 2024-04-13T19:26:15. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -79,8 +79,8 @@
     <value type="int" key="ClangTools.ParallelJobs">8</value>
     <value type="bool" key="ClangTools.PreferConfigFile">true</value>
     <valuelist type="QVariantList" key="ClangTools.SelectedDirs">
-     <value type="QString">/home/kardasland/QtProjects/AvaSys-GCS/video</value>
      <value type="QString">/home/kardasland/QtProjects/AvaSys-GCS/mavlink</value>
+     <value type="QString">/home/kardasland/QtProjects/AvaSys-GCS/video</value>
      <value type="QString">/home/kardasland/QtProjects/AvaSys-GCS/serial</value>
      <value type="QString">/home/kardasland/QtProjects/AvaSys-GCS/utils</value>
     </valuelist>

@@ -149,7 +149,7 @@ int MavLinkUDP::initialize(const QString& ipString, int port) {
     connect(&m_udpManager, &UDPManager::imageCapturedSignal, this, &MavLinkUDP::imageCapturedSignal);
     connect(&m_udpManager, &UDPManager::batteryDataReceived, this, &MavLinkUDP::batteryDataReceived);
     connect(&m_udpManager, &UDPManager::flyingStateChanged, this, &MavLinkUDP::flyingStateChanged);
-
+    connect(&m_udpManager, &UDPManager::attitudeDataReceived, this, &MavLinkUDP::attitudeDataReceived);
     // Connect signals from MavLinkProperties to MavLink
     connect(m_mavLinkProperties, &MavLinkProperties::connectedChanged, this, &MavLinkUDP::connectedChanged);
 
@@ -181,6 +181,10 @@ void MavLinkUDP::pressureDataReceived(int id, float pressure){
 }
 void MavLinkUDP::batteryDataReceived(int sysid, float voltage, float current, float remainingCapacity){
     m_planeController->updateBattery(sysid, voltage, current, remainingCapacity);
+}
+void MavLinkUDP::attitudeDataReceived(int sysid, float roll, float pitch, float yaw)
+{
+    m_planeController->updateAttitude(sysid, roll, pitch, yaw);
 }
 
 void MavLinkUDP::onHeartbeatTimeout() {
@@ -307,6 +311,8 @@ void MavLinkUDP::flyingStateChanged(bool isFlying)
 {
     m_mavLinkProperties->setIsFlying(isFlying);
 }
+
+
 
 NotificationCenter *MavLinkUDP::notificationCenter() const
 {

@@ -11,6 +11,8 @@ class plane : public QObject
     Q_PROPERTY(int sysid READ sysid WRITE setSysid NOTIFY sysidChanged FINAL)
     Q_PROPERTY(float longitude READ longitude WRITE setLongitude NOTIFY longitudeChanged FINAL)
     Q_PROPERTY(float latitude READ latitude WRITE setLatitude NOTIFY latitudeChanged FINAL)
+    Q_PROPERTY(float roll READ roll WRITE setRoll NOTIFY rollChanged FINAL)
+    Q_PROPERTY(float pitch READ pitch WRITE setPitch NOTIFY pitchChanged FINAL)
     Q_PROPERTY(int32_t altitude READ altitude WRITE setAltitude NOTIFY altitudeChanged FINAL)
     Q_PROPERTY(float yaw READ yaw WRITE setYaw NOTIFY yawChanged FINAL)
     Q_PROPERTY(bool isSelected READ isSelected WRITE setIsSelected NOTIFY isSelectedChanged FINAL)
@@ -154,6 +156,12 @@ public:
     float remainingCapacity() const;
     void setRemainingCapacity(float newRemainingCapacity);
 
+    Q_INVOKABLE float roll() const;
+    void setRoll(float newRoll);
+
+    Q_INVOKABLE float pitch() const;
+    void setPitch(float newPitch);
+
 signals:
 
     void sysidChanged();
@@ -214,6 +222,10 @@ signals:
 
     void remainingCapacityChanged();
 
+    void rollChanged();
+
+    void pitchChanged();
+
 private:
     int m_sysid;
 
@@ -248,5 +260,7 @@ private:
     float m_voltage;
     float m_current;
     float m_remainingCapacity;
+    float m_roll;
+    float m_pitch;
 };
 #endif // PLANE_H

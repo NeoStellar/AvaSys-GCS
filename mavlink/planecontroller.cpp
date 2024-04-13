@@ -3,6 +3,7 @@
 #include "QList"
 #include "plane.h"
 #include "plane.h"
+#include <cmath>
 
 PlaneController::PlaneController(NotificationCenter *notificationCenter, QObject *parent)
     : QObject(parent), m_notificationCenter(notificationCenter), m_selectedid(-5)
@@ -182,6 +183,20 @@ void PlaneController::updateBattery(int sysid, float voltage, float current, flo
         a.plane2->setVoltage(voltage);
         a.plane2->setCurrent(current);
         a.plane2->setRemainingCapacity(remainingCapacity);
+    }
+}
+double radiansToDegrees(double radians) {
+    return radians * (180.0 / M_PI);
+}
+void PlaneController::updateAttitude(int sysid, float roll, float pitch, float yaw)
+{
+    struct planestatus a = quickCheck(sysid);
+    if(a.isValid){
+        a.plane2->setRoll(radiansToDegrees(roll));
+        a.plane2->setPitch(radiansToDegrees(pitch));
+        //qDebug() << "plane roll: " << radiansToDegrees(roll);
+        //qDebug() << "plane pitch: " << radiansToDegrees(pitch);
+        // raw will be unused rn.
     }
 }
 

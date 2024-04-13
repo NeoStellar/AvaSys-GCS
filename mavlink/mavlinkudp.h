@@ -83,6 +83,7 @@ public slots:
     void flyStateChanged(bool isFlying);
     void onDisconnect(int sysid);
     void flyingStateChanged(bool isFlying);
+    void attitudeDataReceived(int sysid, float roll, float pitch, float yaw);
 
 
 private:

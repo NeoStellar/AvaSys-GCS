@@ -16,5 +16,15 @@
         <file>ui/DrawerPanel/DrawerPanel.qml</file>
         <file>ui/VideoPanel/VideoPanel.qml</file>
         <file>ui/assets/marker.png</file>
+        <file>ui/NotificationPanel/NotificationPanel.qml</file>
+        <file>ui/HorizonPanel/InstrumentBackground.qml</file>
+        <file>ui/HorizonPanel/ArtificialHorizon.qml</file>
+        <file>ui/HorizonPanel/TickMark.qml</file>
+        <file>ui/HorizonPanel/HorizonPanel.qml</file>
+        <file>ui/Indicators/CustomImage.qml</file>
+        <file>ui/assets/hi_case.svg</file>
+        <file>ui/assets/hi_face.svg</file>
+        <file>ui/assets/hi.svg</file>
+        <file>ui/Indicators/HdgIndicator/HdgIndicator.qml</file>
     </qresource>
 </RCC>

@@ -47,7 +47,12 @@ Rectangle {
             onTriggered: {
                 if(sd !== video.isRunning){
                     console.log("Different values! Changing camera status.");
+                    if(video.isRunning){
+                        NotificationCenter.sendNotification("Found camera!", 4);
+                    }
                 }
+
+
                 sd = video.isRunning;
             }
         }

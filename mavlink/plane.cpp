@@ -420,3 +420,29 @@ void plane::setRemainingCapacity(float newRemainingCapacity)
     m_remainingCapacity = newRemainingCapacity;
     emit remainingCapacityChanged();
 }
+
+float plane::roll() const
+{
+    return m_roll;
+}
+
+void plane::setRoll(float newRoll)
+{
+    if (qFuzzyCompare(m_roll, newRoll))
+        return;
+    m_roll = newRoll;
+    emit rollChanged();
+}
+
+float plane::pitch() const
+{
+    return m_pitch;
+}
+
+void plane::setPitch(float newPitch)
+{
+    if (qFuzzyCompare(m_pitch, newPitch))
+        return;
+    m_pitch = newPitch;
+    emit pitchChanged();
+}

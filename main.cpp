@@ -14,6 +14,7 @@
 #include <QString>
 #include <QDir>
 #include <QMetaType>
+#include <horizon/linearindicator.h>
 
 
 
@@ -55,12 +56,14 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
     VideoItem videoItem;
     qmlRegisterType<VideoItem>("CustomTypes", 1, 0, "VideoItem");
+    qmlRegisterType<LinearIndicator>("io.smth", 1, 0, "LinearIndicator");
+    qmlRegisterType<ColorSegment>("io.smth", 1, 0, "ColorSegment");
     NotificationCenter notificationCenter;
     MavLinkProperties mavlinkProperties;
     PlaneController planeController(&notificationCenter);
     HttpClient client;
     TeknofestProperties teknofestProperties;
-    teknofestProperties.setQrLongitude(-122.50);
+    teknofestProperties.setQrLongitude(-122.25);
     mavlinkProperties.setPorts(get_available_ports());
     MavLinkUDP mavLink(&mavlinkProperties, &planeController, &teknofestProperties, &client, &notificationCenter, &app);
     QQmlApplicationEngine engine;

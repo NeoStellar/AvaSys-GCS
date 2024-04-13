@@ -140,7 +140,7 @@ void UDPReceiverThread::run() {
                         case MAVLINK_MSG_ID_ATTITUDE:
                             mavlink_attitude_t attitude;
                             mavlink_msg_attitude_decode(&msg, &attitude);
-
+                            emit attitudeDataReceived(msg.sysid, attitude.roll, attitude.pitch, attitude.yaw);
                             //qDebug() << "Yaw [" << msg.sysid << "]: " << attitude.yaw;
                             //emit yawDataRecieved(msg.sysid, attitude.yaw);
                             break;
@@ -317,6 +317,7 @@ int UDPManager::initialize(const QString& ipString, int port) {
     connect(m_receiverThread, &UDPReceiverThread::batteryDataReceived, this, &UDPManager::batteryDataReceived);
     connect(m_receiverThread, &UDPReceiverThread::armDataReceived, this, &UDPManager::armDataReceived);
     connect(m_receiverThread, &UDPReceiverThread::flyingStateChanged, this, &UDPManager::flyingStateChanged);
+    connect(m_receiverThread, &UDPReceiverThread::attitudeDataReceived, this, &UDPManager::attitudeDataReceived);
     m_receiverThread->start();
 
     m_mavlinkProperties->setSysid(1);

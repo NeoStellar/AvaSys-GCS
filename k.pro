@@ -40,6 +40,8 @@ INCLUDEPATH += pkg-config --cflags glib-2.0
 #LIBS += -/home/kardasland/QtProjects/AvaSys-GCS/mavlink-out
 
 SOURCES += \
+        horizon/linearindicator.cpp \
+        horizon/painterhelpers.cpp \
         main.cpp \
         mavlink/mavlinkudp.cpp \
         mavlink/plane.cpp \
@@ -77,6 +79,8 @@ DISTFILES += \
     ui/assets/ui-current.png
 
 HEADERS += \
+    horizon/linearindicator.h \
+    horizon/painterhelpers.h \
     mavlink-out/checksum.h \
     mavlink-out/common/common.h \
     mavlink-out/common/common.hpp \

@@ -46,7 +46,7 @@ public slots:
     void updateSpeed(int id, float speed);
     void updatePressure(int sysid, float pressure);
     void updateBattery(int sysid, float voltage, float current, float remainingCapacity);
-
+    void updateAttitude(int sysid, float roll, float pitch, float yaw);
     void setTeam(int sysid, int teamid);
     Q_INVOKABLE void changeSelection(int systemid);
     void removeLocalPlane(int sysid);
