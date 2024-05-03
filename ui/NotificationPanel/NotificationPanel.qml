@@ -13,8 +13,8 @@ Item {
         horizontalCenter: bottomPanel1.horizontalCenter
     }
     width: topBar.width
-    implicitWidth: element.implicitWidth
-    implicitHeight: element.implicitHeight
+    implicitWidth: element !== null ? element.implicitWidth : 0
+    implicitHeight: element !== null ? element.implicitHeight : 0
     opacity: 0.8
     visible: false
     height: 200
@@ -70,10 +70,7 @@ Item {
                 }
 
                 Component.onCompleted: {
-                    // Set up removal logic when item is created
                     notificationListView.positionViewAtEnd()
-                    console.log(category);
-                    console.log(getCategoryColor(category));
                 }
             }
             function getCategoryColor(category) {

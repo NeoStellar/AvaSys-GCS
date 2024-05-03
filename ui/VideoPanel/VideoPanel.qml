@@ -18,7 +18,7 @@ Rectangle {
         bottom: bottomPanel1.top
     }
     width: 370
-    height: 240
+    implicitHeight: 240
     color: "black"
 
 
@@ -26,6 +26,7 @@ Rectangle {
     VideoItem {
         id: video
         //opacity: 1
+        height: 240
         anchors {
             //fill: parent
             //centerIn: videoRect
@@ -67,4 +68,84 @@ Rectangle {
         }
         text: "Camera Feed"
     }
+    Button {
+        id: qrMissionButton
+        width: video.width / 2
+        height: 25
+        anchors {
+            left: videoRect.left
+            leftMargin: 5
+            bottomMargin: 5
+            rightMargin: 5
+            bottom: videoRect.top
+        }
+        background: Rectangle {
+            border.width: qrMissionButton.activeFocus ? 2 : 1
+            border.color: "black"
+            radius: 5
+            color: "lightgray"
+        }
+        text: "QR Görevi"
+    }
+
+    Button {
+        id: kasjdka
+        height: 25
+        anchors {
+            left: qrMissionButton.right
+            right: videoRect.right
+            leftMargin: 5
+            rightMargin: 5
+            bottomMargin: 5
+            bottom: videoRect.top
+        }
+        background: Rectangle {
+            border.width: kasjdka.activeFocus ? 2 : 1
+            border.color: "black"
+            radius: 5
+            color: "lightgray"
+        }
+        text: "Serbest Uçuş"
+    }
+
+    Button {
+        id: btn1
+        width: video.width / 2
+        height: 25
+        anchors {
+            left: videoRect.left
+            leftMargin: 5
+            bottomMargin: 5
+            rightMargin: 5
+            bottom: qrMissionButton.top
+        }
+        background: Rectangle {
+            border.width: btn1.activeFocus ? 2 : 1
+            border.color: "black"
+            radius: 5
+            color: "lightgray"
+        }
+        text: "En Yakın Takip"
+    }
+
+    Button {
+        id: btn2
+        height: 25
+        anchors {
+            left: btn1.right
+            right: videoRect.right
+            leftMargin: 5
+            rightMargin: 5
+            bottomMargin: 5
+            bottom: qrMissionButton.top
+        }
+        background: Rectangle {
+            border.width: btn2.activeFocus ? 2 : 1
+            border.color: "black"
+            radius: 5
+            color: "lightgray"
+        }
+        text: "Kaçış Görevi"
+    }
+
 }

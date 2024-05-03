@@ -11,8 +11,9 @@ import io.smth 1.0
 InstrumentBackground {
         id: ahInstrumentBackground
         anchors {
-            bottom: videoRect.top;
+            top: topBar.bottom;
             right: videoRect.right;
+            bottomMargin: 35
         }
         property int a: rightPanel.height - topBar.height - bottomPanel1.height - videoRect.height
         width: 460;
@@ -57,8 +58,8 @@ InstrumentBackground {
             anchors.centerIn: parent
             anchors.horizontalCenterOffset: -10
 
-            roll: ahInstrumentBackground.plane.roll //3.2
-            pitch: ahInstrumentBackground.plane.pitch //3.7
+            roll: ahInstrumentBackground.plane.roll !== null ? ahInstrumentBackground.plane.roll : 0 //3.2
+            pitch: ahInstrumentBackground.plane.pitch !== null ? ahInstrumentBackground.plane.pitch : 0
         }
 
         Text {
@@ -89,7 +90,7 @@ InstrumentBackground {
             anchors.horizontalCenter: parent.horizontalCenter
 
             current: {
-                return ahInstrumentBackground.plane.yaw
+                return ahInstrumentBackground.plane.yaw !== null ? ahInstrumentBackground.plane.yaw : 0
             }
             wrap: 360
 
@@ -106,7 +107,7 @@ InstrumentBackground {
             anchors.verticalCenter: artificialHorizon.verticalCenter
 
             current: {
-                return ahInstrumentBackground.plane.airspeed
+                return ahInstrumentBackground.plane.airspeed !== null ? ahInstrumentBackground.plane.airspeed : 0
             }
 
             orientation: LinearIndicator.VerticalRight
@@ -130,7 +131,7 @@ InstrumentBackground {
             id: speedTargetLabel
             anchors.horizontalCenter: speedLinearIndicator.horizontalCenter
             anchors.top: speedLinearIndicator.bottom; anchors.topMargin: 5
-            text: ahInstrumentBackground.plane.airspeed.toFixed(2) //Math.ceil(speedDial.position * 400)
+            text: ahInstrumentBackground.plane.airspeed !== null ? ahInstrumentBackground.plane.airspeed.toFixed(2) : 0 //Math.ceil(speedDial.position * 400)
             font { bold: true; pointSize: 14 }
             color: "white"
         }
@@ -148,7 +149,7 @@ InstrumentBackground {
 
             current: {
                 //console.log(ahInstrumentBackground.plane.altitude)
-                return ahInstrumentBackground.plane.altitude * 100
+                return (ahInstrumentBackground.plane.altitude !== null) ? ahInstrumentBackground.plane.altitude * 100 : 0
             }
 
             font {
@@ -159,7 +160,7 @@ InstrumentBackground {
 
         Canvas {
             // vertical speed instead of airspeed
-            property real diff: ahInstrumentBackground.plane.airspeed / 1.5
+            property real diff: (ahInstrumentBackground.plane.airspeed !== null ? ahInstrumentBackground.plane.airspeed : 0) / 1.5
             property real fullScale: 1.0
             anchors.right: parent.right; anchors.rightMargin: 30
             anchors.verticalCenter: parent.verticalCenter
@@ -198,7 +199,7 @@ InstrumentBackground {
             id: altitudeTargetLabel
             anchors.horizontalCenter: altitudeLinearIndicator.horizontalCenter
             anchors.top: altitudeLinearIndicator.bottom; anchors.topMargin: 5
-            text: ahInstrumentBackground.plane.altitude * 100; //Math.ceil(altitudeDial.position * 10000)
+            text: ahInstrumentBackground.plane.altitude !== null ? (ahInstrumentBackground.plane.altitude * 100) : 0; //Math.ceil(altitudeDial.position * 10000)
             font { bold: true; pointSize: 14 }
             color: "white"
         }
@@ -216,7 +217,7 @@ InstrumentBackground {
             anchors.top: aThrLabel.bottom
             anchors.horizontalCenter: aThrLabel.horizontalCenter
             text: "SPD"; color: "#00d0d0"; font { pixelSize: 18 }
-            visible: athrButton.pressed && (Math.abs(speedLinearIndicator.current - speedDial.position * 400) < 1)
+            visible: true
         }
 
         Text {

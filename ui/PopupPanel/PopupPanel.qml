@@ -251,5 +251,5 @@ Rectangle {
         }
         //fontSizeMode: Text.Fit
         text: popup.getIhaInfo();
-    }
+    } 
 }
