@@ -30,7 +30,7 @@ This project is originally intended for the Turkey Teknofest competition in 2024
 
 The project is built with C++, Qt Framework and usage of MavLink libraries. Here is the major libraries and technologies.
 
-- [C++](https://nextjs.org)
+- [C++](https://isocpp.org/)
 - [Qt Framework](https://www.qt.io/)
 - [MavLink](https://github.com/mavlink/mavlink)
 - [OpenCV](https://github.com/opencv/opencv)
